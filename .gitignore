@@ -17,3 +17,6 @@ data_*/
 Thumbs.db
 *.swp
 *~
+
+# Claude Code
+.claude/

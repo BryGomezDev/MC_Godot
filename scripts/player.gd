@@ -1,3 +1,4 @@
+class_name Player
 extends CharacterBody2D
 
 @export var speed: float = 60.0
@@ -7,7 +8,7 @@ extends CharacterBody2D
 enum Form { ADULT, CHILD }
 
 var _locked: bool = false
-var _nearby: Array[Area2D] = []
+var _nearby: Array[Interactable] = []
 
 func _ready() -> void:
 	add_to_group("player")
@@ -29,20 +30,20 @@ func _unhandled_input(event: InputEvent) -> void:
 func _trigger_nearest() -> void:
 	if _nearby.is_empty():
 		return
-	var nearest: Area2D = _nearby[0]
+	var nearest: Interactable = _nearby[0]
 	var min_dist: float = global_position.distance_squared_to(nearest.global_position)
 	for i in range(1, _nearby.size()):
 		var d: float = global_position.distance_squared_to(_nearby[i].global_position)
 		if d < min_dist:
 			min_dist = d
 			nearest = _nearby[i]
-	nearest.call("trigger")
+	nearest.trigger()
 
-func add_nearby_interactable(i: Area2D) -> void:
+func add_nearby_interactable(i: Interactable) -> void:
 	if i not in _nearby:
 		_nearby.append(i)
 
-func remove_nearby_interactable(i: Area2D) -> void:
+func remove_nearby_interactable(i: Interactable) -> void:
 	_nearby.erase(i)
 
 func lock_control() -> void:

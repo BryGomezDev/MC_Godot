@@ -1,4 +1,4 @@
-# Dev Notes — S3/S4 Player, NPC & Dialogue System
+# Dev Notes — S3/S4/S5 Player, NPC, Dialogue & Pasillo
 
 ## Architecture
 
@@ -29,11 +29,9 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 - `_unhandled_input`: on `interact` press, calls `trigger()` on the nearest Area2D in `_nearby`
 - `set_form(Form)` — switches Body ColorRect color (ADULT = blue, CHILD = orange) — ready for story use
 
-### `scripts/interactable.gd` — Area2D base
-- No `class_name` (omitted to avoid GDScript reload error code 43 in MCP reload cycles)
-- NPC inherits via path: `extends "res://scripts/interactable.gd"`
-- On `body_entered` by a "player" group member: calls `add_nearby_interactable`, shows `HintLabel`
-- On `body_exited`: calls `remove_nearby_interactable`, hides `HintLabel`
+### `scripts/interactable.gd` — Area2D base (`class_name Interactable`)
+- Uses `body is Player` check (typed, replaces group-based check)
+- Calls `(body as Player).add_nearby_interactable(self)` / `remove_nearby_interactable(self)` directly
 - `trigger()` emits `interacted` signal
 
 ### `scripts/npc.gd` — extends Interactable
@@ -43,10 +41,12 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 - `@export var speaker_key: String = ""` — translation key for the speaker name shown in the dialogue box
 - `@export var body_color: Color = Color(0.6, 0.2, 0.2, 1)` — placeholder body colour
 - `@export var body_height: int = 20` — body height in px (20 = standing, 14 = seated)
-- `_dm` reference obtained at runtime via `get_node("/root/DialogueManager")`
-- In `_ready()`: applies `body_color` and `body_height` to the child ColorRect `Body`
-- On interact: starts dialogue via `_dm.start(dialogue_keys, speaker_key)` if not yet spoken
-- After dialogue: hides Indicator, notifies GameState
+- `@export var show_body: bool = true` — si false, oculta el Body ColorRect (útil para NPCs detrás de una puerta)
+- `extends Interactable` (tipado, ya no usa ruta de texto)
+- `DialogueManager.start(dialogue_keys, speaker_key)` directo (sin `_dm` ni get_node)
+- In `_ready()`: aplica body_color/body_height si show_body=true; oculta Body si show_body=false
+- On interact: inicia diálogo si no hablado aún; conecta dialogue_finished CONNECT_ONE_SHOT
+- After dialogue: oculta Indicator, notifica GameState
 
 ### `scripts/dialogue_manager.gd` — Node autoload
 - Instantiates `ui/dialogue_box.tscn` as a child at startup via `load()` (not `preload()`)
@@ -83,6 +83,7 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 | `scene/actors/npc.tscn` | Area2D | CollisionShape2D (24×30), ColorRect Body (colour/height set at runtime via @export), HintLabel ("E"), Indicator (yellow) |
 | `ui/dialogue_box.tscn` | CanvasLayer (layer=50) | Panel (y=195–270, 75px), SpeakerLabel (11px, hidden when no speaker), TextLabel (autowrap), HintLabel ("[ E ]") |
 | `scene/salon.tscn` | Node2D | 480×270. Placeholders: Floor, Mesa, Sofá, ArbolTronco, ArbolCopa, Puerta. 6 NPC (Mamá, Hermano, Cuñada, Esposa, Hija, Sobrino), todos required=true. ExitZone en x=470 |
+| `scene/pasillo.tscn` | Node2D | 480×270. Placeholders: DoorPadre (x=138-180), DoorOtra (x=278-320), DoorHabitacion (x=442-475), LightBeam (apagado al inicio). NPC_Papa (required=true, show_body=false), NPC_DoorOther (required=false, show_body=false). ExitZone en x=470 |
 
 ### Salon layout (480×270)
 | Elemento | Posición placeholder | Color |
@@ -117,6 +118,8 @@ Claves activas:
 - `TITLE_START`, `LANG_ES`, `LANG_EN` — título
 - `SPEAKER_MAMA/HERMANO/CUNADA/ESPOSA/HIJA/SOBRINO/PAPA` — nombres de hablantes
 - `NPC_MAMA_1/2`, `NPC_HERMANO_1/2`, `NPC_CUNADA_1/2`, `NPC_ESPOSA_1/2`, `NPC_HIJA_1/2`, `NPC_SOBRINO_1/2` — diálogos [TEMP]
+- `NPC_PAPA_1/2` — diálogos del padre (pasillo) [TEMP]
+- `DOOR_OTHER_1` — texto de descarte de la puerta cerrada [TEMP]
 
 Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 
@@ -126,8 +129,8 @@ Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 
 - **`input_key("E")` vs `input_action("interact")`**: `input_key` dispatches through the event system (needed for `_unhandled_input` / `_input`). `input_action` only updates the `Input` singleton (needed for `Input.get_axis()` in `_physics_process`). Use the right one for the right handler.
 - **Spawning inside an Area2D**: `body_entered` does not fire if a body spawns already overlapping the zone. Start slightly outside for reliable detection.
-- **`class_name Interactable`**: Omitted from `interactable.gd` — caused GDScript error code 43 during hot-reload cycles in the MCP environment.
-- **DialogueManager in npc.gd**: accessed via `get_node("/root/DialogueManager")` at runtime rather than by class identifier, because the MCP plugin's parser cache doesn't see dynamically-added autoloads.
+- **`class_name` en hot-reload (MCP)**: Al añadir class_name puede aparecer el error código 43 durante la recarga en caliente del plugin MCP. Solución: recargar el plugin (`editor_reload_plugin`) y volver a comprobar los logs. No revierte la class_name — el error es del hot-reload, no del código.
+- **DialogueManager en npc.gd**: acceso directo por nombre global (`DialogueManager.start(...)`) — los autoloads son globales en Godot 4 y no necesitan get_node ni ruta de texto.
 - **tr("") returns ""**: Passing empty speaker_key through tr() is safe — the SpeakerLabel is hidden when speaker == "".
 
 ---

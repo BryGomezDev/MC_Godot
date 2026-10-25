@@ -1,3 +1,4 @@
+class_name DialogueBox
 extends CanvasLayer
 
 signal page_done

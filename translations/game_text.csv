@@ -26,3 +26,6 @@ NPC_HIJA_1,[TEMP] ¡Ven, siéntate con nosotros un momento!,[TEMP] Come sit with
 NPC_HIJA_2,[TEMP] Llevo todo el día esperando esta cena. ¡Me muero de hambre!,[TEMP] I've been waiting all day for this dinner. I'm starving!
 NPC_SOBRINO_1,[TEMP] ¿Viste el árbol? Le pusimos las luces nuevas.,[TEMP] Did you see the tree? We put the new lights on it.
 NPC_SOBRINO_2,[TEMP] Esta noche no quiero que acabe. ¿A qué hora abrimos los regalos?,[TEMP] I don't want tonight to end. What time do we open presents?
+NPC_PAPA_1,[TEMP] Pasa, pasa, que hace frío en el pasillo.,[TEMP] Come in come in — it's cold out here in the hallway.
+NPC_PAPA_2,[TEMP] ¡Feliz Nochebuena! Estamos todos reunidos. Qué bien.,[TEMP] Merry Christmas Eve! We're all together. How wonderful.
+DOOR_OTHER_1,[TEMP] Esta puerta está cerrada.,[TEMP] This door is closed.
