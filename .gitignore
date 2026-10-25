@@ -1,0 +1,19 @@
+﻿# Godot editor cache (generado automaticamente)
+.godot/
+
+# Builds de export
+exports/
+builds/
+
+# Godot Mono
+.mono/
+data_*/
+
+# Archivos de traduccion compilados (generados del CSV, no versionar)
+*.translation
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~

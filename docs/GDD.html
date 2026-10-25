@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merry Christmas · GDD v0.2</title>
+<style>
+  :root{--bg:#fbfaf7;--fg:#1f2a24;--muted:#5d6b63;--line:#e3e0d6;--acc:#9b2d2d;--acc2:#2f5d46;--card:#ffffff;--warn:#fff4d6;--ok:#e3f2e8;--open:#fde7e7}
+  @media (prefers-color-scheme:dark){:root{--bg:#141a17;--fg:#e8ece9;--muted:#9aa9a0;--line:#2b3631;--acc:#e08585;--acc2:#7fc4a0;--card:#1b2420;--warn:#3a321a;--ok:#1d3326;--open:#3a2020}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px 80px}
+  header{padding:48px 0 24px;border-bottom:2px solid var(--acc)}
+  header h1{margin:0;font-size:2.1rem;letter-spacing:-.02em}
+  header p{margin:6px 0 0;color:var(--muted)}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .tag{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:2px 12px;font-size:.85rem}
+  nav{position:sticky;top:0;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);z-index:2;font-size:.9rem}
+  nav a{margin-right:14px;color:var(--acc2);text-decoration:none;white-space:nowrap}
+  section{margin-top:40px}
+  h2{font-size:1.4rem;margin:0 0 12px;color:var(--acc)}
+  h3{font-size:1.05rem;margin:22px 0 6px}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:.93rem}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:color-mix(in srgb,var(--acc2) 12%,var(--card));font-weight:600}
+  .box{border:1px solid var(--line);border-radius:8px;padding:12px 16px;background:var(--card);margin:12px 0}
+  .warn{background:var(--warn)} .ok{background:var(--ok)} .open{background:var(--open)}
+  .st{font-size:.78rem;font-weight:700;border-radius:4px;padding:1px 7px;white-space:nowrap}
+  .st.c{background:var(--ok)} .st.p{background:var(--warn)} .st.o{background:var(--open)}
+  code{background:color-mix(in srgb,var(--fg) 8%,transparent);padding:1px 5px;border-radius:4px;font-size:.88em}
+  pre{background:color-mix(in srgb,var(--fg) 7%,transparent);padding:12px;border-radius:8px;overflow:auto;font-size:.85rem}
+  ul{padding-left:20px} li{margin:3px 0}
+  .small{font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Merry Christmas — Game Design Document</h1>
+  <p>Felicitación navideña jugable · Nochebuena · ≤ 5 minutos · 3 escenarios</p>
+  <div class="meta">
+    <span class="tag">GDD v0.2</span>
+    <span class="tag">25-oct-2026</span>
+    <span class="tag">Godot 4.7.2</span>
+    <span class="tag">Web (HTML5) → itch.io</span>
+    <span class="tag">ES / EN</span>
+    <span class="tag">Solo PC</span>
+  </div>
+</header>
+
+<nav>
+  <a href="#vision">Visión</a><a href="#tec">Técnico</a><a href="#flujo">Flujo</a><a href="#escenas">Escenas</a>
+  <a href="#npcs">NPCs</a><a href="#mec">Mecánicas</a><a href="#arq">Arquitectura</a><a href="#arte">Arte y audio</a>
+  <a href="#tiempo">Duración</a><a href="#riesgos">Riesgos</a><a href="#dec">Decisiones</a><a href="#plan">Plan</a><a href="#log">Cambios</a>
+</nav>
+
+<section id="vision">
+  <h2>1. Visión</h2>
+  <p>Una cena de Nochebuena vista desde dentro. El jugador, adulto, recorre su casa saludando a su familia hasta llegar a su habitación, donde una caja de música lo lleva un instante a una Navidad de la infancia en la que nadie faltaba. El juego termina con "Noche de paz", una cámara que sale de la casa bajo la nieve y un mensaje que recuerda a los que ya no están, cerrando con "Feliz Navidad".</p>
+  <h3>Pilares</h3>
+  <ul>
+    <li><b>Breve:</b> máximo 5 minutos, sin fallo ni puzzles.</li>
+    <li><b>Íntimo:</b> pequeños detalles familiares en los diálogos; las menciones a los abuelos son sutiles.</li>
+    <li><b>Contraste:</b> el salón es cálido y ruidoso; la habitación es oscura y silenciosa. El flashback rompe ese silencio.</li>
+    <li><b>Accesible:</b> dos controles (moverse e interactuar), nada que explicar.</li>
+  </ul>
+</section>
+
+<section id="tec">
+  <h2>2. Ficha técnica</h2>
+  <table>
+    <tr><th>Elemento</th><th>Decisión</th><th>Estado</th></tr>
+    <tr><td>Motor</td><td>Godot 4.7.2 (rama 4.7, versión de mantenimiento)</td><td><span class="st c">Confirmado</span></td></tr>
+    <tr><td>Renderer</td><td>GL Compatibility (ya configurado en <code>project.godot</code>)</td><td><span class="st c">Confirmado</span></td></tr>
+    <tr><td>Plataforma de entrega</td><td>Export Web (HTML5) subido a itch.io como ZIP con <code>index.html</code> en la raíz; marcar "This file will be played in the browser"</td><td><span class="st c">Confirmado</span></td></tr>
+    <tr><td>Hilos en el export web</td><td>Single-thread (Thread Support desactivado) para no depender de SharedArrayBuffer</td><td><span class="st p">Propuesto</span></td></tr>
+    <tr><td>Resolución base</td><td>480×270 (16:9), escalado entero; viewport de incrustación en itch.io 960×540</td><td><span class="st p">Propuesto</span></td></tr>
+    <tr><td>Stretch</td><td>Hoy: <code>canvas_items</code> + <code>expand</code>. Para pixel art se propone modo <code>viewport</code> con escala entera; se valida en el prompt 1</td><td><span class="st p">Propuesto</span></td></tr>
+    <tr><td>Controles</td><td>←/→ o A/D para moverse; E o Espacio para interactuar. Solo PC</td><td><span class="st c">Confirmado</span> (teclas concretas: propuesta)</td></tr>
+    <tr><td>Idiomas</td><td>Español e inglés. Textos en un CSV de traducciones (columna de claves + <code>es</code> + <code>en</code>), sin columnas extra tipo "comment"</td><td><span class="st c">Confirmado</span></td></tr>
+    <tr><td>Selector de idioma</td><td>En la pantalla de título (no depender del idioma del navegador)</td><td><span class="st p">Propuesto</span></td></tr>
+    <tr><td>Herramienta de desarrollo</td><td>Claude Code + MCP <code>godot-ai</code> (plugin ya instalado y probado: crea y borra nodos)</td><td><span class="st c">Confirmado</span></td></tr>
+    <tr><td>Repositorio</td><td>GitHub: <code>https://github.com/BryGomezDev/MC_Godot.git</code> (rama main)</td><td><span class="st c">Confirmado</span></td></tr>
+  </table>
+</section>
+
+<section id="flujo">
+  <h2>3. Flujo del juego</h2>
+  <table>
+    <tr><th>#</th><th>Pantalla</th><th>Objetivo del jugador</th><th>Salida</th></tr>
+    <tr><td>0</td><td>Título</td><td>Elegir idioma y pulsar para empezar (también sirve de primer gesto para el audio en navegador)</td><td>Salón</td></tr>
+    <tr><td>1</td><td>Salón</td><td>Hablar con los 6 NPC</td><td>Puerta al pasillo se desbloquea</td></tr>
+    <tr><td>2</td><td>Pasillo</td><td>Hablar con el padre (puerta de la izquierda o derecha, por definir en arte)</td><td>Se enciende el haz de luz al fondo</td></tr>
+    <tr><td>3</td><td>Habitación</td><td>Entrar en el haz de luz de luna → flashback → coger la caja → salir corriendo del haz</td><td>Suena "Noche de paz"</td></tr>
+    <tr><td>4</td><td>Final</td><td>Sin control: la cámara sube hacia el exterior, noche nevada, mensaje y "Feliz Navidad"</td><td>Fin</td></tr>
+  </table>
+</section>
+
+<section id="escenas">
+  <h2>4. Escenas</h2>
+
+  <h3>4.1 Salón</h3>
+  <ul>
+    <li>Vista lateral, un único plano de suelo; el jugador entra por la izquierda.</li>
+    <li>Madre preparando la mesa; hermano y cuñada sentados a la mesa; esposa de pie junto al sofá; hija y sobrino sentados en el sofá con el móvil.</li>
+    <li>Cada NPC muestra un indicador mientras no se ha hablado con él. Al terminar con los seis, se desbloquea la salida al pasillo.</li>
+    <li>Ambiente: música suave, murmullo, luces del árbol. Aquí se plantan las primeras menciones sutiles a los abuelos.</li>
+  </ul>
+
+  <h3>4.2 Pasillo</h3>
+  <ul>
+    <li>Dos puertas de frente; solo una es interactiva. Dentro está el padre, que no se ve: solo un diálogo breve.</li>
+    <li>La otra puerta tiene una línea corta de descarte, para que no parezca un fallo (decisión de Claude, a validar).</li>
+    <li>Al fondo, un haz de luz marca la entrada a la habitación; se activa tras hablar con el padre.</li>
+  </ul>
+
+  <h3>4.3 Habitación y flashback</h3>
+  <ul>
+    <li>Habitación a oscuras; un haz de luz de luna entra por el balcón e ilumina la mitad de la estancia.</li>
+    <li>Dentro del haz, sobre una mesa, un objeto resaltado: la caja de música.</li>
+    <li><b>Entrar en el haz:</b> el sprite del jugador pasa a ser él mismo de niño y comienza el flashback.</li>
+    <li><b>Flashback:</b> al otro lado de la puerta se oye (texto) a la madre decir que los abuelos han llegado. En la realidad, los abuelos ya no están.</li>
+    <li><b>Coger la caja:</b> el jugador interactúa con el objeto y sale corriendo hacia el haz de luz, que cruza por segunda vez; al hacerlo vuelve a la realidad y a ser adulto.</li>
+    <li><b>Pausa breve:</b> el juguete "conecta". Después empieza a sonar "Noche de paz" (estribillo en bucle, sonitono de caja de música) y comienza el final. El juego termina ahí, sin más interacción.</li>
+  </ul>
+  <h3>Máquina de estados de la habitación</h3>
+<pre>EXPLORANDO ──(entra en haz)──▶ FLASHBACK ──(interactúa con caja)──▶ HUIDA ──(cruza el haz 2ª vez)──▶ PAUSA ──▶ MÚSICA ──▶ FINAL
+   adulto                       sprite niño      control bloqueado      vuelve adulto            "conecta"   suena, sin control</pre>
+
+  <h3>4.4 Final</h3>
+  <ul>
+    <li>La cámara se desplaza en vertical hacia fuera de la casa: exterior nocturno, nieve, tejado y cielo.</li>
+    <li>Requiere arte exterior situado sobre la habitación (silueta de la casa, cielo, nieve).</li>
+    <li>Aparece un mensaje breve, recordando los viejos tiempos y a los que ya no están, y termina con "Feliz Navidad".</li>
+    <li>El texto del mensaje lo redacta Claude y lo aprueba Brayan.</li>
+  </ul>
+</section>
+
+<section id="npcs">
+  <h2>5. Personajes</h2>
+  <table>
+    <tr><th>Personaje</th><th>Escena</th><th>Posición / actividad</th><th>Interacción</th></tr>
+    <tr><td>Jugador (adulto)</td><td>Todas</td><td>—</td><td>Sprite adulto y sprite niño (flashback)</td></tr>
+    <tr><td>Madre</td><td>1</td><td>Preparando la mesa</td><td>Diálogo. Su voz se "oye" en el flashback</td></tr>
+    <tr><td>Hermano</td><td>1</td><td>Sentado a la mesa</td><td>Diálogo</td></tr>
+    <tr><td>Cuñada</td><td>1</td><td>Sentada a la mesa</td><td>Diálogo</td></tr>
+    <tr><td>Esposa</td><td>1</td><td>De pie junto al sofá</td><td>Diálogo</td></tr>
+    <tr><td>Hija</td><td>1</td><td>Sentada en el sofá, con el móvil</td><td>Diálogo</td></tr>
+    <tr><td>Sobrino</td><td>1</td><td>Sentado en el sofá, con el móvil</td><td>Diálogo</td></tr>
+    <tr><td>Padre</td><td>2</td><td>Dentro de una habitación (no visible)</td><td>Diálogo tras la puerta</td></tr>
+    <tr><td>Abuelos</td><td>—</td><td>No aparecen. Se les menciona en algunos diálogos y se "anuncia" su llegada en el flashback</td><td>—</td></tr>
+  </table>
+  <div class="box warn">
+    <b>Diálogos:</b> los redacta Claude en ES y EN; Brayan revisa y da el visto bueno antes de integrarlos. El inglés es traducción de Claude y debe revisarse también. Cada NPC: 2–3 burbujas cortas y, como máximo, una elección opcional. <b>Nombres:</b> placeholders por rol (Mamá, Papá, Hermano, Cuñada, Esposa, Hija, Sobrino), sin nombres reales.
+  </div>
+</section>
+
+<section id="mec">
+  <h2>6. Mecánicas</h2>
+  <ul>
+    <li><b>Movimiento:</b> horizontal, sin salto.</li>
+    <li><b>Interacción:</b> botón único cuando el jugador está dentro del <code>Area2D</code> de un NPC o elemento; aparece un icono de aviso.</li>
+    <li><b>Diálogo:</b> caja de texto con efecto de escritura, avance con el botón de interacción, textos tomados del CSV de traducciones.</li>
+    <li><b>Progreso:</b> un contador interno de interacciones por escena abre la salida. Sin puzzles, sin fallo.</li>
+    <li><b>Transiciones:</b> fundido a negro entre escenas; en el final, movimiento vertical de cámara.</li>
+    <li><b>Flashback:</b> zona de luz (<code>Area2D</code>) que cambia sprite, filtro/tinte y ambiente de audio al entrar y al salir.</li>
+  </ul>
+</section>
+
+<section id="arq">
+  <h2>7. Arquitectura propuesta en Godot</h2>
+  <p class="small">Propuesta inicial; se ajusta durante el prompt 1.</p>
+<pre>res://
+├─ scene/
+│  ├─ main.tscn            (ya existe, vacío)
+│  ├─ title.tscn
+│  ├─ salon.tscn · pasillo.tscn · habitacion.tscn · final.tscn
+│  └─ actors/ player.tscn · npc.tscn
+├─ ui/ dialogue_box.tscn · transition.tscn
+├─ scripts/ game_state.gd · scene_manager.gd · interactable.gd
+├─ translations/ game_text.csv
+├─ art/ · audio/
+├─ docs/ GDD.html · informes de sesión
+└─ addons/godot_ai/        (plugin MCP, ya instalado)</pre>
+  <ul>
+    <li><b>GameState (autoload):</b> contadores de interacciones, banderas (padre hablado, flashback visto).</li>
+    <li><b>SceneManager (autoload):</b> cambio de escena con fundido.</li>
+    <li><b>NPC genérico:</b> mismo script/escena; cada instancia recibe sus claves de texto.</li>
+  </ul>
+</section>
+
+<section id="arte">
+  <h2>8. Arte y audio</h2>
+  <h3>Estrategia</h3>
+  <ol>
+    <li>Todo el juego jugable primero con placeholders (formas y colores).</li>
+    <li>Después, sprites gratuitos de packs con licencia clara; si no hay sprites adecuados, arte generado con IA como plan B.</li>
+  </ol>
+  <div class="box warn"><b>Requisito crítico de arte:</b> necesitamos un personaje coherente en versión adulta y versión niño (misma identidad visual) y 7 NPC reconocibles. Es el criterio que más va a limitar la elección del pack.</div>
+  <h3>Registro de licencias (obligatorio antes de publicar)</h3>
+  <table>
+    <tr><th>Recurso</th><th>Origen</th><th>Licencia</th><th>Estado</th></tr>
+    <tr><td>Sprites personajes</td><td>Por decidir</td><td>—</td><td><span class="st o">Pendiente</span></td></tr>
+    <tr><td>Fondos / mobiliario</td><td>Por decidir</td><td>—</td><td><span class="st o">Pendiente</span></td></tr>
+    <tr><td>Sonitono "Noche de paz" (estribillo)</td><td>Brayan lo extrae de internet</td><td>Según Brayan, tono genérico sin licencia (no verificado). Anotar la URL de origen</td><td><span class="st p">Asumido</span></td></tr>
+    <tr><td>SFX y ambiente</td><td>Por decidir</td><td>—</td><td><span class="st o">Pendiente</span></td></tr>
+  </table>
+  <p class="small">Nota: los assets de Kenney son CC0 (confirmado en su página de soporte). OpenGameArt mezcla licencias: hay que revisar cada recurso.</p>
+</section>
+
+<section id="tiempo">
+  <h2>9. Duración estimada</h2>
+  <p class="small">Estimación de Claude, no un dato medido. Se calibrará con pruebas reales.</p>
+  <table>
+    <tr><th>Tramo</th><th>Estimación</th></tr>
+    <tr><td>Título y primeros pasos</td><td>0:10</td></tr>
+    <tr><td>Salón: 6 NPC × 20–30 s + desplazamientos</td><td>2:00 – 3:15</td></tr>
+    <tr><td>Pasillo: padre + trayecto</td><td>0:30 – 0:45</td></tr>
+    <tr><td>Habitación: trayecto + flashback + coger caja</td><td>0:45 – 1:00</td></tr>
+    <tr><td>Final: música, cámara, mensaje</td><td>0:40 – 1:00</td></tr>
+    <tr><td><b>Total</b></td><td><b>≈ 4:05 – 6:10</b></td></tr>
+  </table>
+  <div class="box warn">El techo de 5 minutos queda ajustado. Palancas para recortar: burbujas más cortas, texto que avanza más rápido y hacer opcionales algunos NPC del salón.</div>
+</section>
+
+<section id="riesgos">
+  <h2>10. Riesgos</h2>
+  <table>
+    <tr><th>Riesgo</th><th>Impacto</th><th>Mitigación</th></tr>
+    <tr><td>Sprites adulto/niño coherentes no disponibles en packs gratuitos</td><td>Alto</td><td>Decidir el origen del arte pronto; plan B con IA o edición de sprites</td></tr>
+    <tr><td>Duración por encima de 5 min</td><td>Medio</td><td>Texto corto; medir con una partida cronometrada</td></tr>
+    <tr><td>Licencia del sonitono de "Noche de paz"</td><td>Bajo–medio</td><td>Brayan lo considera un tono genérico sin licencia; no está verificado. Anotar el origen; sustituible por una versión sintetizada</td></tr>
+    <tr><td>Audio y compatibilidad en navegador (Safari/macOS)</td><td>Medio</td><td>Pantalla de título con clic; probar en varios navegadores antes de publicar. La documentación consultada contiene una nota sobre macOS/iOS que no se ha podido confirmar para 4.7</td></tr>
+    <tr><td>Arte exterior para el final (casa, cielo, nieve)</td><td>Medio</td><td>Silueta simple + partículas de nieve; probar CPU vs GPU en web</td></tr>
+    <tr><td>Telemetría anónima del plugin godot-ai (según su README)</td><td>Bajo</td><td>Revisar ajustes del plugin si se quiere desactivar</td></tr>
+  </table>
+</section>
+
+<section id="dec">
+  <h2>11. Registro de decisiones</h2>
+  <table>
+    <tr><th>ID</th><th>Decisión</th><th>Origen</th></tr>
+    <tr><td>D-01</td><td>Godot 4.7.2, GL Compatibility</td><td>Brayan</td></tr>
+    <tr><td>D-02</td><td>Entrega Web HTML5 en itch.io, solo PC</td><td>Brayan</td></tr>
+    <tr><td>D-03</td><td>Controles: mover izquierda/derecha + un botón de interacción</td><td>Brayan</td></tr>
+    <tr><td>D-04</td><td>Pixel art, vista lateral, 480×270</td><td>Brayan (recomendación aceptada)</td></tr>
+    <tr><td>D-05</td><td>Placeholders primero; sprites gratuitos; IA como plan B</td><td>Brayan</td></tr>
+    <tr><td>D-06</td><td>Flashback dentro de la habitación mediante haz de luz de luna y cambio de sprite a niño</td><td>Brayan</td></tr>
+    <tr><td>D-07</td><td>Final: cámara vertical al exterior nevado, mensaje emotivo y "Feliz Navidad"</td><td>Brayan</td></tr>
+    <tr><td>D-08</td><td>NPC: madre, hermano, cuñada, esposa, hija y sobrino (salón); padre (pasillo, no visible); sin NPC en la habitación</td><td>Brayan</td></tr>
+    <tr><td>D-09</td><td>Abuelos ausentes, mencionados en diálogos</td><td>Brayan</td></tr>
+    <tr><td>D-10</td><td>Tono: cariñoso, con una elección opcional por NPC; sin puzzles</td><td>Brayan (recomendación aceptada)</td></tr>
+    <tr><td>D-11</td><td>Idiomas ES y EN</td><td>Brayan</td></tr>
+    <tr><td>D-12</td><td>Brayan aprueba todos los diálogos</td><td>Brayan</td></tr>
+    <tr><td>D-13</td><td>Música: sonitono de "Noche de paz" externo, estribillo en bucle</td><td>Brayan</td></tr>
+    <tr><td>D-14</td><td>Todos los prompts a Claude Code: subagentes especializados y commit + push al final</td><td>Brayan</td></tr>
+    <tr><td>D-15</td><td>Pantalla de título con selector de idioma; export single-thread; resolución 480×270 con escala entera; textos en CSV</td><td>Claude (propuesta, salvo veto)</td></tr>
+    <tr><td>D-16</td><td>La música arranca cuando el jugador cruza el haz de luz por segunda vez y vuelve a la realidad; hay una pequeña pausa en la que el juguete "conecta", después suena y termina el juego</td><td>Brayan</td></tr>
+    <tr><td>D-17</td><td>Nombres de NPC como placeholders por rol, sin nombres reales</td><td>Brayan</td></tr>
+    <tr><td>D-18</td><td>Repositorio: github.com/BryGomezDev/MC_Godot; GDD en <code>docs/</code></td><td>Brayan</td></tr>
+    <tr><td>D-19</td><td>Todo prompt a Claude Code empieza asignándole un rol explícito</td><td>Brayan</td></tr>
+  </table>
+
+  <h3>Decisiones abiertas</h3>
+  <table>
+    <tr><th>ID</th><th>Pregunta</th><th>Propuesta de Claude</th></tr>
+    <tr><td>O-01</td><td>Visibilidad del repositorio (privado o público)</td><td>Privado hasta publicar</td></tr>
+            <tr><td>O-04</td><td>Origen definitivo del arte (pack + variante niño)</td><td>Buscar pack con personajes modulares</td></tr>
+      </table>
+</section>
+
+<section id="plan">
+  <h2>12. Plan de sesiones</h2>
+  <table>
+    <tr><th>Sesión</th><th>Contenido</th><th>Entregable</th></tr>
+    <tr><td>S1 (hoy)</td><td>GDD v0.1 y decisiones</td><td>GDD.html + informe de sesión</td></tr>
+    <tr><td>S2</td><td>Repo, estructura de proyecto, resolución, autoloads, esqueleto de escenas y transición</td><td>Prompt 1 (Claude Code)</td></tr>
+    <tr><td>S3</td><td>Jugador, interacción, caja de diálogo, CSV de traducciones</td><td>Prompt 2</td></tr>
+    <tr><td>S4</td><td>Salón con NPC placeholder y diálogos de prueba</td><td>Prompt 3</td></tr>
+    <tr><td>S5</td><td>Pasillo y habitación; máquina de estados del flashback</td><td>Prompt 4</td></tr>
+    <tr><td>S6</td><td>Música, final con cámara vertical y nieve</td><td>Prompt 5</td></tr>
+    <tr><td>S7</td><td>Arte definitivo, pulido, export web y prueba en itch.io</td><td>Build final</td></tr>
+  </table>
+  <p class="small">Fecha objetivo: antes de Nochebuena (24-dic-2026). Quedan unas 8 semanas.</p>
+</section>
+
+<section id="log">
+  <h2>13. Historial de cambios del GDD</h2>
+  <table>
+    <tr><th>Versión</th><th>Fecha</th><th>Cambios</th></tr>
+    <tr><td>0.2</td><td>2026-10-25</td><td>Repositorio confirmado. Secuencia final de la habitación (música al cruzar el haz por 2ª vez, con pausa). NPC por rol. Sonitono asumido sin licencia. Decisiones D-16 a D-19; cerradas O-02, O-03 y O-05.</td></tr>
+    <tr><td>0.1</td><td>2026-10-24</td><td>Documento inicial con todas las decisiones de la sesión 1.</td></tr>
+  </table>
+</section>
+
+</div>
+</body>
+</html>
