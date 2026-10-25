@@ -7,3 +7,7 @@ SCENE_SALON,Salón,Living Room
 SCENE_PASILLO,Pasillo,Hallway
 SCENE_HABITACION,Habitación,Bedroom
 SCENE_FINAL,Final,Ending
+TEST_NPC_A_1,[TEMP] Hola. Feliz Navidad.,[TEMP] Hello. Merry Christmas.
+TEST_NPC_A_2,[TEMP] ¿Lista la cena?,[TEMP] Is dinner ready?
+TEST_NPC_B_1,[TEMP] Los regalos están debajo del árbol.,[TEMP] The gifts are under the tree.
+TEST_NPC_B_2,[TEMP] ¡Qué bonita época del año!,[TEMP] What a beautiful time of year!

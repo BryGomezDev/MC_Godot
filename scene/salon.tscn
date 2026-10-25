@@ -1,6 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/salon_scene.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scene/actors/player.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scene/actors/npc.tscn" id="3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(20, 270)
 
 [node name="Salon" type="Node2D"]
 script = ExtResource("1")
@@ -18,3 +23,24 @@ offset_bottom = 127.0
 text = "Salon"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Player" parent="." instance=ExtResource("2")]
+position = Vector2(50.0, 190.0)
+
+[node name="NPC_A" parent="." instance=ExtResource("3")]
+position = Vector2(150.0, 190.0)
+npc_id = "TEST_NPC_A"
+dialogue_keys = ["TEST_NPC_A_1", "TEST_NPC_A_2"]
+required = true
+
+[node name="NPC_B" parent="." instance=ExtResource("3")]
+position = Vector2(350.0, 190.0)
+npc_id = "TEST_NPC_B"
+dialogue_keys = ["TEST_NPC_B_1", "TEST_NPC_B_2"]
+required = true
+
+[node name="ExitZone" type="Area2D" parent="."]
+position = Vector2(460.0, 135.0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ExitZone"]
+shape = SubResource("RectangleShape2D_1")
