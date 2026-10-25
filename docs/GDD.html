@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Merry Christmas · GDD v0.2</title>
+<title>Merry Christmas · GDD v0.4</title>
 <style>
   :root{--bg:#fbfaf7;--fg:#1f2a24;--muted:#5d6b63;--line:#e3e0d6;--acc:#9b2d2d;--acc2:#2f5d46;--card:#ffffff;--warn:#fff4d6;--ok:#e3f2e8;--open:#fde7e7}
   @media (prefers-color-scheme:dark){:root{--bg:#141a17;--fg:#e8ece9;--muted:#9aa9a0;--line:#2b3631;--acc:#e08585;--acc2:#7fc4a0;--card:#1b2420;--warn:#3a321a;--ok:#1d3326;--open:#3a2020}}
@@ -40,7 +40,7 @@
   <h1>Merry Christmas — Game Design Document</h1>
   <p>Felicitación navideña jugable · Nochebuena · ≤ 5 minutos · 3 escenarios</p>
   <div class="meta">
-    <span class="tag">GDD v0.2</span>
+    <span class="tag">GDD v0.4</span>
     <span class="tag">25-oct-2026</span>
     <span class="tag">Godot 4.7.2</span>
     <span class="tag">Web (HTML5) → itch.io</span>
@@ -91,7 +91,7 @@
     <tr><th>#</th><th>Pantalla</th><th>Objetivo del jugador</th><th>Salida</th></tr>
     <tr><td>0</td><td>Título</td><td>Elegir idioma y pulsar para empezar (también sirve de primer gesto para el audio en navegador)</td><td>Salón</td></tr>
     <tr><td>1</td><td>Salón</td><td>Hablar con los 6 NPC</td><td>Puerta al pasillo se desbloquea</td></tr>
-    <tr><td>2</td><td>Pasillo</td><td>Hablar con el padre (puerta de la izquierda o derecha, por definir en arte)</td><td>Se enciende el haz de luz al fondo</td></tr>
+    <tr><td>2</td><td>Pasillo</td><td>Hablar con el padre (puerta de la izquierda); la puerta central es de descarte</td><td>Se enciende el haz de luz al fondo</td></tr>
     <tr><td>3</td><td>Habitación</td><td>Entrar en el haz de luz de luna → flashback → coger la caja → salir corriendo del haz</td><td>Suena "Noche de paz"</td></tr>
     <tr><td>4</td><td>Final</td><td>Sin control: la cámara sube hacia el exterior, noche nevada, mensaje y "Feliz Navidad"</td><td>Fin</td></tr>
   </table>
@@ -113,6 +113,7 @@
     <li>Dos puertas de frente; solo una es interactiva. Dentro está el padre, que no se ve: solo un diálogo breve.</li>
     <li>La otra puerta tiene una línea corta de descarte, para que no parezca un fallo (decisión de Claude, a validar).</li>
     <li>Al fondo, un haz de luz marca la entrada a la habitación; se activa tras hablar con el padre.</li>
+    <li><b>Implementado (S5):</b> puerta del padre a la izquierda, puerta de descarte en el centro y una tercera puerta decorativa al fondo que enmarca el haz (propuesta de Claude Code, ver D-20).</li>
   </ul>
 
   <h3>4.3 Habitación y flashback</h3>
@@ -121,12 +122,14 @@
     <li>Dentro del haz, sobre una mesa, un objeto resaltado: la caja de música.</li>
     <li><b>Entrar en el haz:</b> el sprite del jugador pasa a ser él mismo de niño y comienza el flashback.</li>
     <li><b>Flashback:</b> al otro lado de la puerta se oye (texto) a la madre decir que los abuelos han llegado. En la realidad, los abuelos ya no están.</li>
-    <li><b>Coger la caja:</b> el jugador interactúa con el objeto y sale corriendo hacia el haz de luz, que cruza por segunda vez; al hacerlo vuelve a la realidad y a ser adulto.</li>
+    <li><b>Coger la caja:</b> el jugador interactúa con el objeto y el niño sale corriendo del haz (huida automática, sin control) por el lado por el que entró. Al cruzar el borde del haz por segunda vez vuelve a la realidad y a ser adulto.</li>
+    <li><b>Si sale del haz sin haber cogido la caja</b> vuelve a ser adulto y puede reintentarlo; los diálogos del flashback no se repiten (propuesta, ver D-23).</li>
     <li><b>Pausa breve:</b> el juguete "conecta". Después empieza a sonar "Noche de paz" (estribillo en bucle, sonitono de caja de música) y comienza el final. El juego termina ahí, sin más interacción.</li>
   </ul>
   <h3>Máquina de estados de la habitación</h3>
-<pre>EXPLORANDO ──(entra en haz)──▶ FLASHBACK ──(interactúa con caja)──▶ HUIDA ──(cruza el haz 2ª vez)──▶ PAUSA ──▶ MÚSICA ──▶ FINAL
-   adulto                       sprite niño      control bloqueado      vuelve adulto            "conecta"   suena, sin control</pre>
+<pre>EXPLORANDO ──(entra en haz)──▶ FLASHBACK ──(interactúa con caja)──▶ HUIDA ──(sale del haz: 2º cruce)──▶ PAUSA ──▶ MÚSICA ──▶ FINAL
+   adulto        ▲                sprite niño      huida automática,        vuelve adulto            "conecta"   suena, sin control
+                 └─(sale sin caja: vuelve adulto)   sin control</pre>
 
   <h3>4.4 Final</h3>
   <ul>
@@ -187,6 +190,8 @@
     <li><b>GameState (autoload):</b> contadores de interacciones, banderas (padre hablado, flashback visto).</li>
     <li><b>SceneManager (autoload):</b> cambio de escena con fundido.</li>
     <li><b>NPC genérico:</b> mismo script/escena; cada instancia recibe sus claves de texto.</li>
+    <li><b>DialogueManager (autoload):</b> muestra los diálogos con nombre de hablante; bloquea al jugador mientras dura.</li>
+    <li><b>Regla de código:</b> todo script que no sea autoload lleva <code>class_name</code>; los autoloads no, y se usan por su nombre global (D-21).</li>
   </ul>
 </section>
 
@@ -233,6 +238,7 @@
     <tr><td>Licencia del sonitono de "Noche de paz"</td><td>Bajo–medio</td><td>Brayan lo considera un tono genérico sin licencia; no está verificado. Anotar el origen; sustituible por una versión sintetizada</td></tr>
     <tr><td>Audio y compatibilidad en navegador (Safari/macOS)</td><td>Medio</td><td>Pantalla de título con clic; probar en varios navegadores antes de publicar. La documentación consultada contiene una nota sobre macOS/iOS que no se ha podido confirmar para 4.7</td></tr>
     <tr><td>Arte exterior para el final (casa, cielo, nieve)</td><td>Medio</td><td>Silueta simple + partículas de nieve; probar CPU vs GPU en web</td></tr>
+    <tr><td>Fuente tipográfica por defecto desentona con el pixel art y ya causó un solape en el diálogo</td><td>Bajo</td><td>Tamaños provisionales (D-25); elegir fuente con licencia verificada (O-07)</td></tr>
     <tr><td>Telemetría anónima del plugin godot-ai (según su README)</td><td>Bajo</td><td>Revisar ajustes del plugin si se quiere desactivar</td></tr>
   </table>
 </section>
@@ -260,6 +266,14 @@
     <tr><td>D-17</td><td>Nombres de NPC como placeholders por rol, sin nombres reales</td><td>Brayan</td></tr>
     <tr><td>D-18</td><td>Repositorio: github.com/BryGomezDev/MC_Godot; GDD en <code>docs/</code></td><td>Brayan</td></tr>
     <tr><td>D-19</td><td>Todo prompt a Claude Code empieza asignándole un rol explícito</td><td>Brayan</td></tr>
+    <tr><td>D-20</td><td>Pasillo con una tercera puerta decorativa al fondo que enmarca el haz de luz; puerta del padre a la izquierda y de descarte en el centro</td><td>Claude Code (aceptada salvo veto)</td></tr>
+    <tr><td>D-21</td><td>Código: <code>class_name</code> en todo script que no sea autoload; autoloads (GameState, SceneManager, DialogueManager) sin <code>class_name</code> y por nombre global</td><td>Brayan</td></tr>
+    <tr><td>D-22</td><td>El playtesting lo hace Brayan; Claude Code solo hace comprobación estática. Los valores <code>@export</code> son provisionales y los balancea Brayan</td><td>Brayan</td></tr>
+    <tr><td>D-23</td><td>Habitación: la huida es automática y sale por el lado de entrada; si el jugador sale del haz sin la caja vuelve a ser adulto y puede reintentar sin repetir diálogos</td><td>Claude (propuesta, a validar)</td></tr>
+    <tr><td>D-24</td><td>Tras la música, cambio provisional a la escena final; el movimiento de cámara se decide en O-06</td><td>Claude (propuesta)</td></tr>
+    <tr><td>D-25</td><td>Cuadro de diálogo: nombre y texto en un contenedor vertical (no pueden solaparse), fuentes más pequeñas y borde superior del panel en y≈205 para no tapar los pies. Valores provisionales. Motivo: en el playtest de S4 el nombre pisaba el texto</td><td>Claude (propuesta, a partir del playtest de Brayan)</td></tr>
+    <tr><td>D-26</td><td>Tras agotar la conversación de un NPC, el aviso "E" deja de mostrarse (no se puede repetir). Alternativa: permitir releer sin contar de nuevo</td><td>Claude (propuesta, a validar)</td></tr>
+    <tr><td>D-27</td><td>NPC de pie (Mamá, Esposa) con los pies sobre el suelo (y=200), igual que el jugador y los sentados</td><td>Brayan (confirmó que flotaban)</td></tr>
   </table>
 
   <h3>Decisiones abiertas</h3>
@@ -267,20 +281,23 @@
     <tr><th>ID</th><th>Pregunta</th><th>Propuesta de Claude</th></tr>
     <tr><td>O-01</td><td>Visibilidad del repositorio (privado o público)</td><td>Privado hasta publicar</td></tr>
             <tr><td>O-04</td><td>Origen definitivo del arte (pack + variante niño)</td><td>Buscar pack con personajes modulares</td></tr>
+            <tr><td>O-07</td><td>Tipografía: la fuente por defecto de Godot (16 px, suave) desentona con el pixel art. ¿Qué fuente pixel se usa? Verificar su licencia antes de incluirla</td><td>Decidir en S8; hasta entonces, fuente por defecto con tamaños reducidos</td></tr>
+            <tr><td>O-06</td><td>¿El final es una escena aparte o la misma habitación con la cámara subiendo hacia el exterior?</td><td>Misma escena con el exterior dibujado encima: el movimiento es continuo</td></tr>
       </table>
 </section>
 
 <section id="plan">
   <h2>12. Plan de sesiones</h2>
   <table>
-    <tr><th>Sesión</th><th>Contenido</th><th>Entregable</th></tr>
-    <tr><td>S1 (hoy)</td><td>GDD v0.1 y decisiones</td><td>GDD.html + informe de sesión</td></tr>
-    <tr><td>S2</td><td>Repo, estructura de proyecto, resolución, autoloads, esqueleto de escenas y transición</td><td>Prompt 1 (Claude Code)</td></tr>
-    <tr><td>S3</td><td>Jugador, interacción, caja de diálogo, CSV de traducciones</td><td>Prompt 2</td></tr>
-    <tr><td>S4</td><td>Salón con NPC placeholder y diálogos de prueba</td><td>Prompt 3</td></tr>
-    <tr><td>S5</td><td>Pasillo y habitación; máquina de estados del flashback</td><td>Prompt 4</td></tr>
-    <tr><td>S6</td><td>Música, final con cámara vertical y nieve</td><td>Prompt 5</td></tr>
-    <tr><td>S7</td><td>Arte definitivo, pulido, export web y prueba en itch.io</td><td>Build final</td></tr>
+    <tr><th>Sesión</th><th>Contenido</th><th>Estado</th></tr>
+    <tr><td>S1</td><td>GDD y decisiones</td><td>Hecho</td></tr>
+    <tr><td>S2</td><td>Base técnica: repo, resolución, autoloads, esqueleto de escenas, localización</td><td>Hecho (aeb5898)</td></tr>
+    <tr><td>S3</td><td>Jugador, interacción y diálogos</td><td>Hecho (32be988)</td></tr>
+    <tr><td>S4</td><td>Salón con 6 NPC y nombre del hablante</td><td>Hecho (cbb406b); playtest OK salvo el cuadro de diálogo (D-25) y los NPC que flotaban (D-27)</td></tr>
+    <tr><td>S5</td><td>Pasillo con el padre, refactor con <code>class_name</code></td><td>Hecho; playtest OK; commit por confirmar en GitHub</td></tr>
+    <tr><td>S6</td><td>Habitación: haz de luz, flashback y máquina de estados</td><td>Siguiente</td></tr>
+    <tr><td>S7</td><td>Música real, final con cámara vertical y nieve</td><td>Pendiente</td></tr>
+    <tr><td>S8</td><td>Arte definitivo, pulido, export web y prueba en itch.io</td><td>Pendiente</td></tr>
   </table>
   <p class="small">Fecha objetivo: antes de Nochebuena (24-dic-2026). Quedan unas 8 semanas.</p>
 </section>
@@ -289,6 +306,8 @@
   <h2>13. Historial de cambios del GDD</h2>
   <table>
     <tr><th>Versión</th><th>Fecha</th><th>Cambios</th></tr>
+    <tr><td>0.4</td><td>2026-10-25</td><td>Resultados del playtest de S4 y S5. D-25 a D-27, O-07 y un riesgo nuevo (tipografía). Plan actualizado.</td></tr>
+    <tr><td>0.3</td><td>2026-10-25</td><td>Pasillo implementado (tercera puerta decorativa), regla de <code>class_name</code>, flujo de la huida del flashback aclarado (corrige una frase confusa de 4.3), plan renumerado según las sesiones reales. D-20 a D-24 y O-06.</td></tr>
     <tr><td>0.2</td><td>2026-10-25</td><td>Repositorio confirmado. Secuencia final de la habitación (música al cruzar el haz por 2ª vez, con pausa). NPC por rol. Sonitono asumido sin licencia. Decisiones D-16 a D-19; cerradas O-02, O-03 y O-05.</td></tr>
     <tr><td>0.1</td><td>2026-10-24</td><td>Documento inicial con todas las decisiones de la sesión 1.</td></tr>
   </table>
