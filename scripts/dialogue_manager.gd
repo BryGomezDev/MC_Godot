@@ -6,6 +6,7 @@ var _box: CanvasLayer
 var _keys: Array[String] = []
 var _index: int = 0
 var _player: Node
+var _speaker: String = ""
 
 func _ready() -> void:
 	_box = load("res://ui/dialogue_box.tscn").instantiate()
@@ -13,8 +14,9 @@ func _ready() -> void:
 	_box.visible = false
 	_box.page_done.connect(_on_page_done)
 
-func start(keys: Array[String]) -> void:
+func start(keys: Array[String], speaker: String = "") -> void:
 	_keys = keys
+	_speaker = speaker
 	_index = 0
 	_player = get_tree().get_first_node_in_group("player")
 	if _player:
@@ -23,7 +25,7 @@ func start(keys: Array[String]) -> void:
 	_show_current()
 
 func _show_current() -> void:
-	_box.call("show_text", tr(_keys[_index]))
+	_box.call("show_text", tr(_keys[_index]), tr(_speaker))
 
 func _on_page_done() -> void:
 	_index += 1

@@ -7,7 +7,22 @@ SCENE_SALON,Salón,Living Room
 SCENE_PASILLO,Pasillo,Hallway
 SCENE_HABITACION,Habitación,Bedroom
 SCENE_FINAL,Final,Ending
-TEST_NPC_A_1,[TEMP] Hola. Feliz Navidad.,[TEMP] Hello. Merry Christmas.
-TEST_NPC_A_2,[TEMP] ¿Lista la cena?,[TEMP] Is dinner ready?
-TEST_NPC_B_1,[TEMP] Los regalos están debajo del árbol.,[TEMP] The gifts are under the tree.
-TEST_NPC_B_2,[TEMP] ¡Qué bonita época del año!,[TEMP] What a beautiful time of year!
+SPEAKER_MAMA,Mamá,Mom
+SPEAKER_HERMANO,Hermano,Brother
+SPEAKER_CUNADA,Cuñada,Sister-in-law
+SPEAKER_ESPOSA,Esposa,Wife
+SPEAKER_HIJA,Hija,Daughter
+SPEAKER_SOBRINO,Sobrino,Nephew
+SPEAKER_PAPA,Papá,Dad
+NPC_MAMA_1,[TEMP] ¡Qué alegría que estéis todos aquí esta noche!,[TEMP] So happy to have everyone here tonight!
+NPC_MAMA_2,[TEMP] La cena está casi lista. ¿Me ayudas a poner la mesa?,[TEMP] Dinner is almost ready. Can you help me set the table?
+NPC_HERMANO_1,[TEMP] ¡Eh, por fin apareces! Llevo aquí media hora.,[TEMP] Hey, you finally showed up! I've been here half an hour.
+NPC_HERMANO_2,[TEMP] Esto se pone bien. El olor de la comida ya llega hasta aquí.,[TEMP] This is shaping up nicely. The smell of the food reaches all the way here.
+NPC_CUNADA_1,[TEMP] ¡Feliz Navidad! ¡Qué bien estar juntos esta noche!,[TEMP] Merry Christmas! So nice to be together tonight!
+NPC_CUNADA_2,[TEMP] El árbol está precioso este año. ¿Quién lo adornó?,[TEMP] The tree looks beautiful this year. Who decorated it?
+NPC_ESPOSA_1,[TEMP] Por fin llegaste. Nos tenías preocupados.,[TEMP] You finally made it. We were getting worried.
+NPC_ESPOSA_2,[TEMP] Esta noche todo el mundo está de buen humor. Es bonito, ¿verdad?,[TEMP] Everyone is in a good mood tonight. It's nice, isn't it?
+NPC_HIJA_1,[TEMP] ¡Ven, siéntate con nosotros un momento!,[TEMP] Come sit with us for a moment!
+NPC_HIJA_2,[TEMP] Llevo todo el día esperando esta cena. ¡Me muero de hambre!,[TEMP] I've been waiting all day for this dinner. I'm starving!
+NPC_SOBRINO_1,[TEMP] ¿Viste el árbol? Le pusimos las luces nuevas.,[TEMP] Did you see the tree? We put the new lights on it.
+NPC_SOBRINO_2,[TEMP] Esta noche no quiero que acabe. ¿A qué hora abrimos los regalos?,[TEMP] I don't want tonight to end. What time do we open presents?

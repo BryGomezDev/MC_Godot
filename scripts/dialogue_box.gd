@@ -4,6 +4,7 @@ signal page_done
 
 @onready var _text_label: Label = $Panel/TextLabel
 @onready var _hint_label: Label = $Panel/HintLabel
+@onready var _speaker_label: Label = $Panel/SpeakerLabel
 
 const CHAR_DELAY: float = 0.04
 
@@ -12,13 +13,15 @@ var _shown_chars: int = 0
 var _typing: bool = false
 var _char_timer: float = 0.0
 
-func show_text(text: String) -> void:
+func show_text(text: String, speaker: String = "") -> void:
 	_full_text = text
 	_shown_chars = 0
 	_typing = true
 	_char_timer = 0.0
 	_text_label.text = ""
 	_hint_label.visible = false
+	_speaker_label.text = speaker
+	_speaker_label.visible = speaker != ""
 
 func _process(delta: float) -> void:
 	if not visible or not _typing:
