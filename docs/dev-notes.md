@@ -1,4 +1,4 @@
-# Dev Notes — S3/S4/S5 Player, NPC, Dialogue & Pasillo
+# Dev Notes — S3/S4/S5/S6 Player, NPC, Dialogue, Pasillo & Habitación
 
 ## Architecture
 
@@ -27,7 +27,7 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 - `lock_control()` / `unlock_control()` — called by DialogueManager during dialogue
 - `add_nearby_interactable(area)` / `remove_nearby_interactable(area)` — called by Interactable on body enter/exit
 - `_unhandled_input`: on `interact` press, calls `trigger()` on the nearest Area2D in `_nearby`
-- `set_form(Form)` — switches Body ColorRect color (ADULT = blue, CHILD = orange) — ready for story use
+- `set_form(Form)` — cambia color Y tamaño del Body ColorRect. ADULT: 12×20 (offset -6,-10,6,10). CHILD: 10×14 pies en y=10 (offset -5,-4,5,10). CollisionShape2D no se toca.
 
 ### `scripts/interactable.gd` — Area2D base (`class_name Interactable`)
 - Uses `body is Player` check (typed, replaces group-based check)
@@ -47,6 +47,8 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 - In `_ready()`: aplica body_color/body_height si show_body=true; oculta Body si show_body=false
 - On interact: inicia diálogo si no hablado aún; conecta dialogue_finished CONNECT_ONE_SHOT
 - After dialogue: oculta Indicator, notifica GameState
+- **S6 fix**: `_update_indicator()` usa `required and not _spoken` — el rombo amarillo solo aparece en NPCs requeridos no hablados
+- **S6 fix**: override `_on_body_entered` — oculta HintLabel "E" si ya se habló con el NPC (`super(body)` + hide if `_spoken`)
 
 ### `scripts/dialogue_manager.gd` — Node autoload
 - Instantiates `ui/dialogue_box.tscn` as a child at startup via `load()` (not `preload()`)
@@ -61,12 +63,36 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 - `show_text(text: String, speaker: String = "")`: sets SpeakerLabel text/visibility and starts typewriter
 - First E press while typing: fast-forwards to full text
 - E press when fully shown: emits `page_done`
+- `@export var font_size_speaker: int = 8` / `@export var font_size_text: int = 10` — aplicados en `_ready()` vía `add_theme_font_size_override`
+- Estructura UI: `Panel/Margins(MarginContainer)/Layout(VBoxContainer)/SpeakerLabel` y `TextLabel`; `HintLabel` es hijo directo de Panel. Panel sube a y=205.
 
 ### `scripts/game_state.gd` — Node autoload
 - `register_required_npc(scene, id)` — called from NPC._ready when required=true
 - `mark_npc_talked(id, scene, required)` — called from NPC after dialogue_finished
 - `_check_complete(scene)` — fires `all_required_done` when every required NPC in the scene is spoken
 - `is_scene_done(scene)` — used on re-entry to pre-unlock exit if scene was already completed
+
+### `scripts/habitacion_scene.gd` — Node2D (`class_name HabitacionScene`)
+
+State machine con enum `State { EXPLORING, FLASHBACK, ESCAPE, PAUSE, MUSIC, DONE }`.
+
+**Transiciones:**
+- `EXPLORING → FLASHBACK`: Player entra en BeamZone. Pone `GameState.flashback_visto = true`, llama `player.set_form(CHILD)`, sube tinte. Solo la primera vez lanza `DialogueManager.start(["FLASHBACK_MAMA_1","FLASHBACK_MAMA_2"], "SPEAKER_MAMA")`.
+- `FLASHBACK → EXPLORING`: Player sale de BeamZone sin coger la caja. Vuelve a ADULT, apaga tinte.
+- `FLASHBACK → ESCAPE`: Player interactúa con CajaDMusica. Oculta caja, bloquea Player, mueve con Tween hacia `x = 240 - 20 = 220` a velocidad `escape_speed`. Respaldo: si el Tween termina y sigue en ESCAPE, fuerza PAUSE.
+- `ESCAPE → PAUSE`: `body_exited` de BeamZone **o** tween completado. Vuelve a ADULT, apaga tinte, espera `connect_pause_seconds`.
+- `PAUSE → MUSIC`: reproduce `MusicPlayer` (si `music_stream` es null → `push_warning` y continúa). Espera `music_hold_seconds`.
+- `MUSIC → DONE`: `SceneManager.change_scene("res://scene/final.tscn")`.
+- Desde ESCAPE en adelante el Player queda bloqueado. `_exit_tree()` mata ambos Tweens.
+
+**@export (HabitacionScene):**
+| Variable | Tipo | Default |
+|----------|------|---------|
+| `tint_alpha` | float | 0.25 |
+| `escape_speed` | float | 140.0 |
+| `connect_pause_seconds` | float | 1.5 |
+| `music_hold_seconds` | float | 4.0 |
+| `music_stream` | AudioStream | null |
 
 ### `scripts/salon_scene.gd` — Node2D
 - Connects `GameState.all_required_done` and `ExitZone.body_entered`
@@ -84,6 +110,7 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 | `ui/dialogue_box.tscn` | CanvasLayer (layer=50) | Panel (y=195–270, 75px), SpeakerLabel (11px, hidden when no speaker), TextLabel (autowrap), HintLabel ("[ E ]") |
 | `scene/salon.tscn` | Node2D | 480×270. Placeholders: Floor, Mesa, Sofá, ArbolTronco, ArbolCopa, Puerta. 6 NPC (Mamá, Hermano, Cuñada, Esposa, Hija, Sobrino), todos required=true. ExitZone en x=470 |
 | `scene/pasillo.tscn` | Node2D | 480×270. Placeholders: DoorPadre (x=138-180), DoorOtra (x=278-320), DoorHabitacion (x=442-475), LightBeam (apagado al inicio). NPC_Papa (required=true, show_body=false), NPC_DoorOther (required=false, show_body=false). ExitZone en x=470 |
+| `scene/habitacion.tscn` | Node2D | 480×270. Placeholders: Floor, PuertaIzq (x=5-25), Ventana (x=400-470, y=30-90), Mesa (x=345-395, y=175-200). LunaBeam ColorRect (x=240-480, alpha baked in color 0.12). BeamZone Area2D en (360,135) shape 240×270. CajaDMusica Interactable en (370,185). FlashbackTint CanvasLayer layer=10 con TintRect (modulate.a=0). MusicPlayer. Player en x=20,y=200. |
 
 ### Salon layout (480×270)
 | Elemento | Posición placeholder | Color |
@@ -122,6 +149,34 @@ Claves activas:
 - `DOOR_OTHER_1` — texto de descarte de la puerta cerrada [TEMP]
 
 Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
+- `FLASHBACK_MAMA_1/2` — diálogos flashback habitación (voz de la madre): la madre avisa de que han llegado los abuelos. [TEMP]
+- `SPEAKER_MAMA` — ya existía
+
+---
+
+---
+
+## Tabla completa de @export (todos los scripts)
+
+| Script | Variable | Tipo | Default |
+|--------|----------|------|---------|
+| `player.gd` | `speed` | float | 60.0 |
+| `player.gd` | `clamp_left` | float | 8.0 |
+| `player.gd` | `clamp_right` | float | 472.0 |
+| `npc.gd` | `npc_id` | String | "" |
+| `npc.gd` | `dialogue_keys` | Array[String] | [] |
+| `npc.gd` | `required` | bool | false |
+| `npc.gd` | `speaker_key` | String | "" |
+| `npc.gd` | `body_color` | Color | Color(0.6,0.2,0.2,1) |
+| `npc.gd` | `body_height` | int | 20 |
+| `npc.gd` | `show_body` | bool | true |
+| `dialogue_box.gd` | `font_size_speaker` | int | 8 |
+| `dialogue_box.gd` | `font_size_text` | int | 10 |
+| `habitacion_scene.gd` | `tint_alpha` | float | 0.25 |
+| `habitacion_scene.gd` | `escape_speed` | float | 140.0 |
+| `habitacion_scene.gd` | `connect_pause_seconds` | float | 1.5 |
+| `habitacion_scene.gd` | `music_hold_seconds` | float | 4.0 |
+| `habitacion_scene.gd` | `music_stream` | AudioStream | null |
 
 ---
 

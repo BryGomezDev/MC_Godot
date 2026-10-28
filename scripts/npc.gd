@@ -36,7 +36,14 @@ func _on_dialogue_finished() -> void:
 	_update_indicator()
 	GameState.mark_npc_talked(npc_id, get_tree().current_scene.name, required)
 
+func _on_body_entered(body: Node2D) -> void:
+	super(body)
+	if _spoken:
+		var hint: Node = get_node_or_null("HintLabel")
+		if hint:
+			hint.visible = false
+
 func _update_indicator() -> void:
 	var indicator: Node = get_node_or_null("Indicator")
 	if indicator:
-		indicator.visible = not _spoken
+		indicator.visible = required and not _spoken

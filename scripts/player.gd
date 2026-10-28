@@ -56,4 +56,16 @@ func unlock_control() -> void:
 func set_form(form: Form) -> void:
 	var body: Node = get_node_or_null("Body")
 	if body is ColorRect:
-		(body as ColorRect).color = Color(0.2, 0.4, 0.8) if form == Form.ADULT else Color(0.8, 0.4, 0.2)
+		var cr := body as ColorRect
+		if form == Form.ADULT:
+			cr.color = Color(0.2, 0.4, 0.8)
+			cr.offset_left = -6.0
+			cr.offset_top = -10.0
+			cr.offset_right = 6.0
+			cr.offset_bottom = 10.0
+		else:
+			cr.color = Color(0.8, 0.4, 0.2)
+			cr.offset_left = -5.0
+			cr.offset_top = -4.0
+			cr.offset_right = 5.0
+			cr.offset_bottom = 10.0

@@ -1,3 +1,4 @@
+class_name SalonScene
 extends Node2D
 
 var _exit_unlocked: bool = false

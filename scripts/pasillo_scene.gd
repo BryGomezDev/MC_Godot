@@ -1,3 +1,4 @@
+class_name PasilloScene
 extends Node2D
 
 var _exit_unlocked: bool = false

@@ -1,6 +1,14 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/habitacion_scene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/interactable.gd" id="2"]
+[ext_resource type="PackedScene" path="res://scene/actors/player.tscn" id="3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_beam"]
+size = Vector2(240, 270)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_caja"]
+size = Vector2(24, 30)
 
 [node name="Habitacion" type="Node2D"]
 script = ExtResource("1")
@@ -10,11 +18,90 @@ color = Color(0.02, 0.02, 0.07, 1)
 offset_right = 480.0
 offset_bottom = 270.0
 
+[node name="Floor" type="ColorRect" parent="."]
+color = Color(0.2, 0.15, 0.1, 1)
+offset_left = 0.0
+offset_top = 200.0
+offset_right = 480.0
+offset_bottom = 270.0
+
+[node name="PuertaIzq" type="ColorRect" parent="."]
+color = Color(0.3, 0.15, 0.05, 1)
+offset_left = 5.0
+offset_top = 150.0
+offset_right = 25.0
+offset_bottom = 200.0
+
+[node name="Ventana" type="ColorRect" parent="."]
+color = Color(0.5, 0.55, 0.8, 1)
+offset_left = 400.0
+offset_top = 30.0
+offset_right = 470.0
+offset_bottom = 90.0
+
+[node name="Mesa" type="ColorRect" parent="."]
+color = Color(0.35, 0.2, 0.08, 1)
+offset_left = 345.0
+offset_top = 175.0
+offset_right = 395.0
+offset_bottom = 200.0
+
+[node name="LunaBeam" type="ColorRect" parent="."]
+color = Color(0.67, 0.78, 1.0, 0.12)
+offset_left = 240.0
+offset_top = 0.0
+offset_right = 480.0
+offset_bottom = 270.0
+
+[node name="BeamZone" type="Area2D" parent="."]
+position = Vector2(360, 135)
+monitoring = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BeamZone"]
+shape = SubResource("RectangleShape2D_beam")
+
+[node name="CajaDMusica" type="Area2D" parent="."]
+position = Vector2(370, 185)
+script = ExtResource("2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CajaDMusica"]
+shape = SubResource("RectangleShape2D_caja")
+
+[node name="Body" type="ColorRect" parent="CajaDMusica"]
+color = Color(0.7, 0.5, 0.3, 1)
+offset_left = -6.0
+offset_top = -12.0
+offset_right = 6.0
+offset_bottom = 0.0
+
+[node name="HintLabel" type="Label" parent="CajaDMusica"]
+visible = false
+offset_left = -8.0
+offset_top = -24.0
+offset_right = 8.0
+offset_bottom = -12.0
+text = "E"
+horizontal_alignment = 1
+
+[node name="FlashbackTint" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="TintRect" type="ColorRect" parent="FlashbackTint"]
+modulate = Color(1, 1, 1, 0)
+color = Color(1.0, 0.85, 0.6, 1.0)
+offset_right = 480.0
+offset_bottom = 270.0
+
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
+
+[node name="Player" parent="." instance=ExtResource("3")]
+position = Vector2(20, 200)
+
 [node name="SceneLabel" type="Label" parent="."]
 offset_left = 190.0
-offset_top = 107.0
+offset_top = 5.0
 offset_right = 290.0
-offset_bottom = 127.0
+offset_bottom = 18.0
 text = "Habitacion"
 horizontal_alignment = 1
 vertical_alignment = 1

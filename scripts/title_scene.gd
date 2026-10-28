@@ -1,3 +1,4 @@
+class_name TitleScene
 extends Node2D
 
 

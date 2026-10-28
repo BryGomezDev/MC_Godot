@@ -3,9 +3,12 @@ extends CanvasLayer
 
 signal page_done
 
-@onready var _text_label: Label = $Panel/TextLabel
+@export var font_size_speaker: int = 8
+@export var font_size_text: int = 10
+
+@onready var _text_label: Label = $Panel/Margins/Layout/TextLabel
 @onready var _hint_label: Label = $Panel/HintLabel
-@onready var _speaker_label: Label = $Panel/SpeakerLabel
+@onready var _speaker_label: Label = $Panel/Margins/Layout/SpeakerLabel
 
 const CHAR_DELAY: float = 0.04
 
@@ -13,6 +16,10 @@ var _full_text: String = ""
 var _shown_chars: int = 0
 var _typing: bool = false
 var _char_timer: float = 0.0
+
+func _ready() -> void:
+	_speaker_label.add_theme_font_size_override("font_size", font_size_speaker)
+	_text_label.add_theme_font_size_override("font_size", font_size_text)
 
 func show_text(text: String, speaker: String = "") -> void:
 	_full_text = text
