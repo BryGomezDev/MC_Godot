@@ -13,7 +13,6 @@ const _BEAM_LEFT_X: float = 240.0
 const _ESCAPE_MARGIN: float = 20.0
 
 var _state: State = State.EXPLORING
-var _dialogue_shown: bool = false
 var _box_taken: bool = false
 var _tint_tween: Tween
 var _escape_tween: Tween
@@ -41,9 +40,6 @@ func _on_beam_entered(body: Node2D) -> void:
 	GameState.flashback_visto = true
 	_player.set_form(Player.Form.CHILD)
 	_fade_tint(tint_alpha)
-	if not _dialogue_shown:
-		_dialogue_shown = true
-		DialogueManager.start(["FLASHBACK_MAMA_1", "FLASHBACK_MAMA_2"], "SPEAKER_MAMA")
 
 
 func _on_beam_exited(body: Node2D) -> void:
@@ -65,8 +61,13 @@ func _on_caja_interacted() -> void:
 		return
 	_box_taken = true
 	_caja.visible = false
-	_state = State.ESCAPE
 	_player.lock_control()
+	DialogueManager.start(["FLASHBACK_MAMA_1", "FLASHBACK_MAMA_2"], "SPEAKER_MAMA")
+	await DialogueManager.dialogue_finished
+	if not is_inside_tree():
+		return
+	_player.lock_control()
+	_state = State.ESCAPE
 	var dest_x: float = _BEAM_LEFT_X - _ESCAPE_MARGIN
 	var distance: float = abs(_player.position.x - dest_x)
 	var duration: float = distance / escape_speed

@@ -77,9 +77,9 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 State machine con enum `State { EXPLORING, FLASHBACK, ESCAPE, PAUSE, MUSIC, DONE }`.
 
 **Transiciones:**
-- `EXPLORING → FLASHBACK`: Player entra en BeamZone. Pone `GameState.flashback_visto = true`, llama `player.set_form(CHILD)`, sube tinte. Solo la primera vez lanza `DialogueManager.start(["FLASHBACK_MAMA_1","FLASHBACK_MAMA_2"], "SPEAKER_MAMA")`.
+- `EXPLORING → FLASHBACK`: Player entra en BeamZone. Pone `GameState.flashback_visto = true`, llama `player.set_form(CHILD)`, sube tinte. Sin diálogo ni lock aquí (D-28).
 - `FLASHBACK → EXPLORING`: Player sale de BeamZone sin coger la caja. Vuelve a ADULT, apaga tinte.
-- `FLASHBACK → ESCAPE`: Player interactúa con CajaDMusica. Oculta caja, bloquea Player, mueve con Tween hacia `x = 240 - 20 = 220` a velocidad `escape_speed`. Respaldo: si el Tween termina y sigue en ESCAPE, fuerza PAUSE.
+- `FLASHBACK → ESCAPE`: Player interactúa con CajaDMusica. Oculta caja, bloquea Player, lanza `DialogueManager.start(["FLASHBACK_MAMA_1","FLASHBACK_MAMA_2"], "SPEAKER_MAMA")`, `await DialogueManager.dialogue_finished` (Player sigue niño, tinte activo). Tras el await: re-lock (DialogueManager auto-desbloquea al emitir), estado → ESCAPE, inicia Tween hacia `x = 240 - 20 = 220` a `escape_speed`. Respaldo: si el Tween termina y sigue en ESCAPE, fuerza PAUSE.
 - `ESCAPE → PAUSE`: `body_exited` de BeamZone **o** tween completado. Vuelve a ADULT, apaga tinte, espera `connect_pause_seconds`.
 - `PAUSE → MUSIC`: reproduce `MusicPlayer` (si `music_stream` es null → `push_warning` y continúa). Espera `music_hold_seconds`.
 - `MUSIC → DONE`: `SceneManager.change_scene("res://scene/final.tscn")`.
@@ -187,6 +187,14 @@ Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 - **`class_name` en hot-reload (MCP)**: Al añadir class_name puede aparecer el error código 43 durante la recarga en caliente del plugin MCP. Solución: recargar el plugin (`editor_reload_plugin`) y volver a comprobar los logs. No revierte la class_name — el error es del hot-reload, no del código.
 - **DialogueManager en npc.gd**: acceso directo por nombre global (`DialogueManager.start(...)`) — los autoloads son globales en Godot 4 y no necesitan get_node ni ruta de texto.
 - **tr("") returns ""**: Passing empty speaker_key through tr() is safe — the SpeakerLabel is hidden when speaker == "".
+
+---
+
+## Cambios post-S6
+
+| ID | Descripción | Archivos |
+|----|-------------|----------|
+| D-28 | Diálogo de la madre trasladado de la entrada al haz de luz a la recogida de la caja de música. `_dialogue_shown` eliminado. Re-lock tras `await dialogue_finished` porque `DialogueManager` auto-desbloquea al emitir la señal. | `habitacion_scene.gd`, `game_text.csv` (ES/EN "Sal"/"Come out") |
 
 ---
 
