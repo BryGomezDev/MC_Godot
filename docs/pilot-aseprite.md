@@ -1,21 +1,47 @@
 # Pilot aseprite-mcp — Informe de viabilidad
 
+> **CORRECCIÓN (2026-11-01):** El piloto original instaló `aseprite-mcp` 0.6.0 de PyPI
+> (autor: greenlogs), que es un derivado distinto al repo de referencia. El paquete correcto
+> es https://github.com/diivi/aseprite-mcp (autor: Divyansh Singh, v0.1.0), ahora instalado
+> en `tools/aseprite-mcp/` al commit `a89b205`. Los sprites de este piloto se generaron con
+> **scripts Lua lanzados directamente contra Aseprite en modo batch**, NO con las herramientas
+> del MCP. Son referencia válida de paleta y proporciones, no de flujo MCP.
+
 Fecha: 2026-11-01
 Aseprite: 1.3.18.6-x64 (Steam)
-MCP: aseprite-mcp 0.6.0 (perfil cli)
+MCP piloto (incorrecto): aseprite-mcp 0.6.0 PyPI (greenlogs) — desinstalado
+MCP correcto instalado: github.com/diivi/aseprite-mcp commit a89b205 (Divyansh Singh, v0.1.0)
 
 ## Instalación
 
-```
-uv tool install aseprite-mcp   # 58 dependencias
+### Paquete correcto (diivi, post-corrección)
+
+```powershell
+git clone https://github.com/diivi/aseprite-mcp tools/aseprite-mcp
+cd tools/aseprite-mcp
+git checkout a89b205bed31930ee141edf319e78c71ef16bba6
+# Crear .env con ASEPRITE_PATH=C:\Program Files (x86)\Steam\steamapps\common\Aseprite\Aseprite.exe
+uv sync   # 32 paquetes, CPython 3.13.13
 ```
 
-- Ejecutable resultante: `C:\Users\BryDev\AppData\Roaming\uv\tools\aseprite-mcp\Scripts\aseprite-mcp.exe`
-- Configurado en `C:\Users\BryDev\.claude\settings.json` bajo `mcpServers.aseprite`
-- Variables de entorno activas:
-  - `ASEPRITE_PATH`: ruta al ejecutable de Steam
-  - `ASEPRITE_MCP_TOOL_PROFILE=cli` (modo disco, sin instancia de Aseprite corriendo)
-- Python 3.14.4, uv 0.13.5
+Entrada en `settings.json`:
+```json
+"aseprite": {
+  "command": "uv",
+  "args": ["--directory", "C:/Users/BryDev/OneDrive/Documentos/tools/aseprite-mcp",
+           "run", "-m", "aseprite_mcp"],
+  "env": { "ASEPRITE_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Aseprite\\Aseprite.exe" }
+}
+```
+
+Arranque verificado: el proceso no crashea al inicio. `ASEPRITE_PATH` se lee en tiempo de ejecución, no al importar — si la ruta es incorrecta falla la tool individual, no el servidor.
+
+### Paquete erróneo (desinstalado)
+
+```
+uv tool install aseprite-mcp   # instaló greenlogs/0.6.0, NO el de diivi
+uv tool uninstall aseprite-mcp  # desinstalado
+```
 
 **Importante:** las herramientas MCP se cargan en el arranque de Claude Code. Instalar y configurar el MCP en una sesión activa no lo hace disponible en esa misma sesión. Se requiere reiniciar Claude Code.
 
@@ -34,7 +60,7 @@ El perfil `cli` expone ~85 herramientas. Categorías principales:
 - **Transformaciones**: `flip_layer`, `rotate_layer`
 - **Otros**: tilemaps, slices
 
-`run_lua_script` está deshabilitada por defecto; requiere `ASEPRITE_MCP_ENABLE_RAW_LUA=1`.
+`run_lua_script` **está siempre activa** en el repo de diivi — no existe variable de entorno que la deshabilite. Se registra incondicionalmente vía `@mcp.tool()` al importar `aseprite_mcp/tools/script.py`. El paquete PyPI (greenlogs) sí tenía `ASEPRITE_MCP_ENABLE_RAW_LUA=1` como guarda, pero este clon no. Usar con precaución: ejecuta Lua arbitrario en el sistema.
 
 **Mecanismo interno:** cada tool call genera un script Lua temporal y ejecuta `Aseprite.exe -b --script script_tmp.lua`. El MCP es esencialmente un wrapper de Aseprite batch mode.
 
@@ -62,7 +88,7 @@ Dimensiones del spritesheet confirmadas por los JSON exportados:
 
 Nota: `--sheet-type columns` produce un strip vertical (una columna). Para strips horizontales usar `--sheet-type rows`.
 
-Scripts Lua utilizados: `create_adulto.lua`, `create_nino.lua` (en `assets/pilot_aseprite/`).
+Scripts Lua utilizados: `create_adulto_lua.lua`, `create_nino_lua.lua` (en `assets/pilot_aseprite/`). Sufijo `_lua` indica que son scripts de batch mode directo, no output del MCP.
 
 Iteraciones efectivas: 2 pasadas para el adulto (primera fallaba por backslashes), 1 pasada para el niño (con el patrón ya corregido).
 
