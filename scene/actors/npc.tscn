@@ -1,35 +1,34 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://btqgowtiekrrq"]
 
-[ext_resource type="Script" path="res://scripts/npc.gd" id="1"]
+[ext_resource type="Script" uid="uid://bni4xm2iu6461" path="res://scripts/npc.gd" id="1"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(24, 30)
 
-[node name="NPC" type="Area2D"]
+[node name="NPC" type="Area2D" unique_id=1126808836]
 script = ExtResource("1")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1137853492]
 shape = SubResource("RectangleShape2D_1")
 
-[node name="Body" type="ColorRect" parent="."]
+[node name="Body" type="ColorRect" parent="." unique_id=2135511665]
 offset_left = -8.0
 offset_top = -48.0
 offset_right = 8.0
-offset_bottom = 0.0
 color = Color(0.6, 0.2, 0.2, 1)
 
-[node name="HintLabel" type="Label" parent="."]
+[node name="HintLabel" type="Label" parent="." unique_id=503587989]
+visible = false
 offset_left = -8.0
 offset_top = -64.0
 offset_right = 8.0
 offset_bottom = -52.0
 text = "E"
-visible = false
 horizontal_alignment = 1
 
-[node name="Indicator" type="ColorRect" parent="."]
+[node name="Indicator" type="ColorRect" parent="." unique_id=1466812721]
 offset_left = -3.0
 offset_top = -72.0
 offset_right = 3.0
 offset_bottom = -66.0
-color = Color(1.0, 1.0, 0.0, 1)
+color = Color(1, 1, 0, 1)
