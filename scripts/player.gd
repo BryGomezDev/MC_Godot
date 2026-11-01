@@ -4,6 +4,7 @@ extends CharacterBody2D
 @export var speed: float = 60.0
 @export var clamp_left: float = 8.0
 @export var clamp_right: float = 472.0
+@export var child_scale: float = 0.7
 
 enum Form { ADULT, CHILD }
 
@@ -57,16 +58,18 @@ func set_form(form: Form) -> void:
 	var body: Node = get_node_or_null("Body")
 	if body is ColorRect:
 		var cr := body as ColorRect
+		var foot: float = Sizes.ADULT_HEIGHT / 2.0
 		if form == Form.ADULT:
 			cr.color = Color(0.2, 0.4, 0.8)
 			cr.offset_left = -Sizes.ADULT_WIDTH / 2.0
-			cr.offset_top = -Sizes.ADULT_HEIGHT / 2.0
+			cr.offset_top = -foot
 			cr.offset_right = Sizes.ADULT_WIDTH / 2.0
-			cr.offset_bottom = Sizes.ADULT_HEIGHT / 2.0
+			cr.offset_bottom = foot
 		else:
 			cr.color = Color(0.8, 0.4, 0.2)
-			cr.offset_left = -Sizes.CHILD_WIDTH / 2.0
-			# ponytail: bottom fixed to ADULT_HEIGHT/2 so feet stay at same y in both forms
-			cr.offset_top = -(Sizes.CHILD_HEIGHT - Sizes.ADULT_HEIGHT / 2.0)
-			cr.offset_right = Sizes.CHILD_WIDTH / 2.0
-			cr.offset_bottom = Sizes.ADULT_HEIGHT / 2.0
+			var hw: float = Sizes.ADULT_WIDTH / 2.0 * child_scale
+			cr.offset_left = -hw
+			# ponytail: bottom fixed to foot so feet stay at same y in both forms
+			cr.offset_top = -(Sizes.ADULT_HEIGHT * child_scale - foot)
+			cr.offset_right = hw
+			cr.offset_bottom = foot

@@ -61,6 +61,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Player" parent="." instance=ExtResource("2")]
+z_index = 2
 position = Vector2(20.0, 176.0)
 
 [node name="NPC_Papa" parent="." instance=ExtResource("3")]

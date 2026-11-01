@@ -28,6 +28,9 @@ func _ready() -> void:
 func _on_interacted() -> void:
 	if _spoken:
 		return
+	var hint: Node = get_node_or_null("HintLabel")
+	if hint:
+		hint.visible = false
 	DialogueManager.start(dialogue_keys, speaker_key)
 	DialogueManager.dialogue_finished.connect(_on_dialogue_finished, CONNECT_ONE_SHOT)
 
@@ -35,6 +38,9 @@ func _on_dialogue_finished() -> void:
 	_spoken = true
 	_update_indicator()
 	GameState.mark_npc_talked(npc_id, get_tree().current_scene.name, required)
+	var hint: Node = get_node_or_null("HintLabel")
+	if hint:
+		hint.visible = false
 
 func _on_body_entered(body: Node2D) -> void:
 	super(body)

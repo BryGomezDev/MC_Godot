@@ -33,10 +33,14 @@ autowrap_mode = 3
 size_flags_vertical = 3
 
 [node name="HintLabel" type="Label" parent="Panel"]
-offset_left = 400.0
-offset_top = 48.0
-offset_right = 478.0
-offset_bottom = 63.0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -88.0
+offset_top = -20.0
+offset_right = -4.0
+offset_bottom = -4.0
 text = "[ E ]"
 visible = false
 horizontal_alignment = 2

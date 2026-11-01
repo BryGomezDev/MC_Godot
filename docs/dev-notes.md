@@ -1,4 +1,4 @@
-# Dev Notes — S3/S4/S5/S6/D-29 Player, NPC, Dialogue, Pasillo & Habitación
+# Dev Notes — S3/S4/S5/S6/D-25/D-26/D-29 Player, NPC, Dialogue, Pasillo & Habitación
 
 ## Architecture
 
@@ -15,11 +15,11 @@ Single source of truth for character dimensions (D-29). All size values in playe
 | Constante | Valor | Uso |
 |-----------|-------|-----|
 | `ADULT_WIDTH` | 16 | Player adulto: medio-ancho (offset ±8) |
-| `ADULT_HEIGHT` | 48 | Player adulto: altura; también `ADULT_HEIGHT/2=24` es el foot_offset fijo para ambas formas |
-| `CHILD_WIDTH` | 10 | Player niño: medio-ancho (offset ±5) |
-| `CHILD_HEIGHT` | 32 | Player niño: altura; top = `-(CHILD_HEIGHT - ADULT_HEIGHT/2)` = -8 |
+| `ADULT_HEIGHT` | 48 | Player adulto: altura; `ADULT_HEIGHT/2=24` es el foot_offset fijo en ambas formas |
 | `NPC_STANDING_HEIGHT` | 48 | NPC adulto de pie (default `body_height`) |
 | `NPC_SEATED_HEIGHT` | 34 | NPC sentado |
+
+`CHILD_WIDTH` y `CHILD_HEIGHT` eliminados; el tamaño del niño se calcula en runtime como `ADULT_* × player.child_scale` (ver `@export var child_scale: float = 0.7` en player.gd).
 
 ### Key Signals
 ```
@@ -39,7 +39,8 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 - `lock_control()` / `unlock_control()` — called by DialogueManager during dialogue
 - `add_nearby_interactable(area)` / `remove_nearby_interactable(area)` — called by Interactable on body enter/exit
 - `_unhandled_input`: on `interact` press, calls `trigger()` on the nearest Area2D in `_nearby`
-- `set_form(Form)` — cambia color Y tamaño del Body ColorRect usando constantes de `Sizes`. ADULT: 16×48 (offset -8,-24,8,24). CHILD: 10×32, pies anclados a `ADULT_HEIGHT/2=24` (offset -5,-8,5,24). Origin del player en y=176 para que los pies queden en y=200 (D-27). CollisionShape2D no se toca.
+- `@export var child_scale: float = 0.7` — factor de escala del niño respecto al adulto (provisional).
+- `set_form(Form)` — ADULT: offsets fijos de `Sizes` (offset -8,-24,8,24). CHILD: hw = `ADULT_WIDTH/2 × child_scale`, offset_bottom = `ADULT_HEIGHT/2` (fijo, pies en y=200), offset_top = `-(ADULT_HEIGHT × child_scale - ADULT_HEIGHT/2)`. CollisionShape2D no se toca.
 
 ### `scripts/interactable.gd` — Area2D base (`class_name Interactable`)
 - Uses `body is Player` check (typed, replaces group-based check)
@@ -61,6 +62,7 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 - After dialogue: oculta Indicator, notifica GameState
 - **S6 fix**: `_update_indicator()` usa `required and not _spoken` — el rombo amarillo solo aparece en NPCs requeridos no hablados
 - **S6 fix**: override `_on_body_entered` — oculta HintLabel "E" si ya se habló con el NPC (`super(body)` + hide if `_spoken`)
+- **D-26 fix**: `_on_interacted()` oculta HintLabel al iniciar el diálogo; `_on_dialogue_finished()` oculta HintLabel al terminar — el "E" desaparece en el mismo instante en que se agota la conversación, sin necesidad de salir y re-entrar al área.
 
 ### `scripts/dialogue_manager.gd` — Node autoload
 - Instantiates `ui/dialogue_box.tscn` as a child at startup via `load()` (not `preload()`)
@@ -119,7 +121,7 @@ State machine con enum `State { EXPLORING, FLASHBACK, ESCAPE, PAUSE, MUSIC, DONE
 |------|-----------|-------|
 | `scene/actors/player.tscn` | CharacterBody2D | CollisionShape2D (16×48), ColorRect Body; origin en y=176 (pies y=200) |
 | `scene/actors/npc.tscn` | Area2D | CollisionShape2D (24×30 — sin cambio), ColorRect Body 16×48 template (height override en _ready via @export), HintLabel ("E"), Indicator (yellow) |
-| `ui/dialogue_box.tscn` | CanvasLayer (layer=50) | Panel (y=195–270, 75px), SpeakerLabel (11px, hidden when no speaker), TextLabel (autowrap), HintLabel ("[ E ]") |
+| `ui/dialogue_box.tscn` | CanvasLayer (layer=50) | Panel (y=205–270, 65px), SpeakerLabel (hidden when no speaker), TextLabel (autowrap), HintLabel ("[ E ]") anclado a bottom-right del Panel (anchor 1,1,1,1; offset -88,-20,-4,-4) |
 | `scene/salon.tscn` | Node2D | 480×270. Placeholders: Floor, Mesa, Sofá, ArbolTronco, ArbolCopa, Puerta. 6 NPC (Mamá, Hermano, Cuñada, Esposa, Hija, Sobrino), todos required=true. ExitZone en x=470 |
 | `scene/pasillo.tscn` | Node2D | 480×270. Placeholders: DoorPadre (x=138-180), DoorOtra (x=278-320), DoorHabitacion (x=442-475), LightBeam (apagado al inicio). NPC_Papa (required=true, show_body=false), NPC_DoorOther (required=false, show_body=false). ExitZone en x=470 |
 | `scene/habitacion.tscn` | Node2D | 480×270. Placeholders: Floor, PuertaIzq (x=5-25), Ventana (x=400-470, y=30-90), Mesa (x=345-395, y=175-200). LunaBeam ColorRect (x=240-480, alpha baked in color 0.12). BeamZone Area2D en (360,135) shape 240×270. CajaDMusica Interactable en (370,185). FlashbackTint CanvasLayer layer=10 con TintRect (modulate.a=0). MusicPlayer. Player en x=20,y=200. |
@@ -175,6 +177,7 @@ Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 | `player.gd` | `speed` | float | 60.0 |
 | `player.gd` | `clamp_left` | float | 8.0 |
 | `player.gd` | `clamp_right` | float | 472.0 |
+| `player.gd` | `child_scale` | float | 0.7 |
 | `npc.gd` | `npc_id` | String | "" |
 | `npc.gd` | `dialogue_keys` | Array[String] | [] |
 | `npc.gd` | `required` | bool | false |
@@ -215,7 +218,9 @@ Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 | ID | Descripción | Archivos |
 |----|-------------|----------|
 | D-28 | Diálogo de la madre trasladado de la entrada al haz de luz a la recogida de la caja de música. `_dialogue_shown` eliminado. Re-lock tras `await dialogue_finished` porque `DialogueManager` auto-desbloquea al emitir la señal. | `habitacion_scene.gd`, `game_text.csv` (ES/EN "Sal"/"Come out") |
-| D-29 | Tamaños de placeholder pasan a ADULTO 16×48 y NIÑO 10×32. Centralizado en `scripts/sizes.gd` (class_name Sizes). Origin del player en y=176 (pies y=200). NPC de pie: 48px, sentados: 34px. `set_form(CHILD)` mantiene `offset_bottom=ADULT_HEIGHT/2=24` para que los pies no salten al cambiar de forma. `habitacion.tscn` player corregido de y=200 a y=176 (pre-existente, inconsistente con D-27). NPC CollisionShape2D (24×30) y clamp 8/472 sin cambio (ver aviso en "Checks D-29"). | `scripts/sizes.gd` (nuevo), `scripts/player.gd`, `scripts/npc.gd`, `scene/actors/player.tscn`, `scene/actors/npc.tscn`, `scene/salon.tscn`, `scene/pasillo.tscn`, `scene/habitacion.tscn` |
+| D-29 | Tamaños placeholder ADULTO 16×48. Centralizado en `scripts/sizes.gd`. Origin player en y=176. NPC de pie: 48px, sentados: 34px. NIÑO ahora derivado de `child_scale=0.7` en runtime (eliminados CHILD_WIDTH/HEIGHT de Sizes). Player z_index=2 en todas las escenas (NPC default=0 — Player se dibuja siempre delante). | `scripts/sizes.gd`, `scripts/player.gd`, `scene/actors/player.tscn`, `scene/salon.tscn`, `scene/pasillo.tscn`, `scene/habitacion.tscn` |
+| D-25 | HintLabel "[ E ]" del cuadro de diálogo salía cortado por el borde inferior derecho. Causa: offsets absolutos (478px, 63px) demasiado cerca del borde del Panel (480×65). Fix: anchor bottom-right (1,1,1,1), offsets -88/-20/-4/-4 — independiente del tamaño del Panel. | `ui/dialogue_box.tscn` |
+| D-26 | HintLabel "E" del NPC permanecía visible tras agotar la conversación mientras el player seguía dentro del área. Causa raíz: `_on_dialogue_finished()` ponía `_spoken=true` pero no ocultaba el hint; solo `_on_body_entered` lo ocultaba (al salir y volver a entrar). Fix: ocultar hint en `_on_interacted()` (al iniciar) y en `_on_dialogue_finished()` (al terminar). | `scripts/npc.gd` |
 
 ---
 
