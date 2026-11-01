@@ -1,4 +1,4 @@
-# Dev Notes — S3/S4/S5/S6 Player, NPC, Dialogue, Pasillo & Habitación
+# Dev Notes — S3/S4/S5/S6/D-29 Player, NPC, Dialogue, Pasillo & Habitación
 
 ## Architecture
 
@@ -8,6 +8,18 @@
 | GameState | `scripts/game_state.gd` | Tracks which NPCs have been spoken to; emits `all_required_done` when a scene's required set is complete |
 | SceneManager | `scripts/scene_manager.gd` | Fade-to-black transition between scenes via Tween |
 | DialogueManager | `scripts/dialogue_manager.gd` | Owns the dialogue box UI; `start(keys, speaker)` locks player and plays through localized strings one page at a time, showing the speaker name |
+
+### Size Constants (`scripts/sizes.gd` — `class_name Sizes`)
+Single source of truth for character dimensions (D-29). All size values in player.gd and npc.gd default derive from here.
+
+| Constante | Valor | Uso |
+|-----------|-------|-----|
+| `ADULT_WIDTH` | 16 | Player adulto: medio-ancho (offset ±8) |
+| `ADULT_HEIGHT` | 48 | Player adulto: altura; también `ADULT_HEIGHT/2=24` es el foot_offset fijo para ambas formas |
+| `CHILD_WIDTH` | 10 | Player niño: medio-ancho (offset ±5) |
+| `CHILD_HEIGHT` | 32 | Player niño: altura; top = `-(CHILD_HEIGHT - ADULT_HEIGHT/2)` = -8 |
+| `NPC_STANDING_HEIGHT` | 48 | NPC adulto de pie (default `body_height`) |
+| `NPC_SEATED_HEIGHT` | 34 | NPC sentado |
 
 ### Key Signals
 ```
@@ -27,7 +39,7 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 - `lock_control()` / `unlock_control()` — called by DialogueManager during dialogue
 - `add_nearby_interactable(area)` / `remove_nearby_interactable(area)` — called by Interactable on body enter/exit
 - `_unhandled_input`: on `interact` press, calls `trigger()` on the nearest Area2D in `_nearby`
-- `set_form(Form)` — cambia color Y tamaño del Body ColorRect. ADULT: 12×20 (offset -6,-10,6,10). CHILD: 10×14 pies en y=10 (offset -5,-4,5,10). CollisionShape2D no se toca.
+- `set_form(Form)` — cambia color Y tamaño del Body ColorRect usando constantes de `Sizes`. ADULT: 16×48 (offset -8,-24,8,24). CHILD: 10×32, pies anclados a `ADULT_HEIGHT/2=24` (offset -5,-8,5,24). Origin del player en y=176 para que los pies queden en y=200 (D-27). CollisionShape2D no se toca.
 
 ### `scripts/interactable.gd` — Area2D base (`class_name Interactable`)
 - Uses `body is Player` check (typed, replaces group-based check)
@@ -40,7 +52,7 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 - `@export var required: bool = false`
 - `@export var speaker_key: String = ""` — translation key for the speaker name shown in the dialogue box
 - `@export var body_color: Color = Color(0.6, 0.2, 0.2, 1)` — placeholder body colour
-- `@export var body_height: int = 20` — body height in px (20 = standing, 14 = seated)
+- `@export var body_height: int = Sizes.NPC_STANDING_HEIGHT` — body height in px (48 = standing, 34 = seated)
 - `@export var show_body: bool = true` — si false, oculta el Body ColorRect (útil para NPCs detrás de una puerta)
 - `extends Interactable` (tipado, ya no usa ruta de texto)
 - `DialogueManager.start(dialogue_keys, speaker_key)` directo (sin `_dm` ni get_node)
@@ -105,8 +117,8 @@ State machine con enum `State { EXPLORING, FLASHBACK, ESCAPE, PAUSE, MUSIC, DONE
 
 | File | Root type | Notes |
 |------|-----------|-------|
-| `scene/actors/player.tscn` | CharacterBody2D | CollisionShape2D (12×20), ColorRect Body |
-| `scene/actors/npc.tscn` | Area2D | CollisionShape2D (24×30), ColorRect Body (colour/height set at runtime via @export), HintLabel ("E"), Indicator (yellow) |
+| `scene/actors/player.tscn` | CharacterBody2D | CollisionShape2D (16×48), ColorRect Body; origin en y=176 (pies y=200) |
+| `scene/actors/npc.tscn` | Area2D | CollisionShape2D (24×30 — sin cambio), ColorRect Body 16×48 template (height override en _ready via @export), HintLabel ("E"), Indicator (yellow) |
 | `ui/dialogue_box.tscn` | CanvasLayer (layer=50) | Panel (y=195–270, 75px), SpeakerLabel (11px, hidden when no speaker), TextLabel (autowrap), HintLabel ("[ E ]") |
 | `scene/salon.tscn` | Node2D | 480×270. Placeholders: Floor, Mesa, Sofá, ArbolTronco, ArbolCopa, Puerta. 6 NPC (Mamá, Hermano, Cuñada, Esposa, Hija, Sobrino), todos required=true. ExitZone en x=470 |
 | `scene/pasillo.tscn` | Node2D | 480×270. Placeholders: DoorPadre (x=138-180), DoorOtra (x=278-320), DoorHabitacion (x=442-475), LightBeam (apagado al inicio). NPC_Papa (required=true, show_body=false), NPC_DoorOther (required=false, show_body=false). ExitZone en x=470 |
@@ -126,14 +138,14 @@ State machine con enum `State { EXPLORING, FLASHBACK, ESCAPE, PAUSE, MUSIC, DONE
 ### NPC positions & @export values
 | NPC | x,y | body_color | body_height | npc_id |
 |-----|-----|-----------|-------------|--------|
-| Mamá (de pie, junto a mesa) | 88, 190 | Color(0.85, 0.35, 0.35, 1) | 20 | MAMA |
-| Hermano (sentado, mesa) | 148, 200 | Color(0.3, 0.4, 0.8, 1) | 14 | HERMANO |
-| Cuñada (sentada, mesa) | 198, 200 | Color(0.2, 0.65, 0.6, 1) | 14 | CUNADA |
-| Esposa (de pie, junto sofá) | 260, 190 | Color(0.65, 0.3, 0.75, 1) | 20 | ESPOSA |
-| Hija (sentada, sofá) | 308, 200 | Color(0.9, 0.65, 0.2, 1) | 14 | HIJA |
-| Sobrino (sentado, sofá) | 355, 200 | Color(0.3, 0.7, 0.35, 1) | 14 | SOBRINO |
+| Mamá (de pie, junto a mesa) | 88, 200 | Color(0.85, 0.35, 0.35, 1) | 48 | MAMA |
+| Hermano (sentado, mesa) | 148, 200 | Color(0.3, 0.4, 0.8, 1) | 34 | HERMANO |
+| Cuñada (sentada, mesa) | 198, 200 | Color(0.2, 0.65, 0.6, 1) | 34 | CUNADA |
+| Esposa (de pie, junto sofá) | 260, 200 | Color(0.65, 0.3, 0.75, 1) | 48 | ESPOSA |
+| Hija (sentada, sofá) | 308, 200 | Color(0.9, 0.65, 0.2, 1) | 34 | HIJA |
+| Sobrino (sentado, sofá) | 355, 200 | Color(0.3, 0.7, 0.35, 1) | 34 | SOBRINO |
 
-Player: x=20, y=190 (izquierda, fuera de zona de cualquier NPC)
+Player: x=20, y=176 (origin centrado; pies en y=200 per D-27)
 ExitZone: Area2D en x=470, y=135 — RectangleShape2D 20×270
 
 ---
@@ -168,7 +180,7 @@ Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 | `npc.gd` | `required` | bool | false |
 | `npc.gd` | `speaker_key` | String | "" |
 | `npc.gd` | `body_color` | Color | Color(0.6,0.2,0.2,1) |
-| `npc.gd` | `body_height` | int | 20 |
+| `npc.gd` | `body_height` | int | 48 (`Sizes.NPC_STANDING_HEIGHT`) |
 | `npc.gd` | `show_body` | bool | true |
 | `dialogue_box.gd` | `font_size_speaker` | int | 8 |
 | `dialogue_box.gd` | `font_size_text` | int | 10 |
@@ -179,6 +191,14 @@ Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 | `habitacion_scene.gd` | `music_stream` | AudioStream | null |
 
 ---
+
+## Checks D-29 (avisos, sin cambio)
+
+| Check | Estado | Detalle |
+|-------|--------|---------|
+| `clamp_left/right = 8.0/472.0` | OK — no cambiar | Con ADULT_WIDTH=16, half-width=8. `clamp_left=8` → left edge toca el viewport izq exactamente (x=0). Antes dejaba 2px de margen. Seguirá funcionando; el margen solo desaparece en el extremo izquierdo. |
+| CajaDMusica Area2D overlap (player CHILD) | OK | Caja en (370,185), collision 24×30 → y:170-200. Player CHILD collision (16×48, sin cambio, CollisionShape2D no se toca) → y:152-200. Overlap en y=170-200. Trigger ✓. Solapamiento visual menor (arte placeholder). |
+| NPC CollisionShape2D (24×30) vs body_height=48 | AVISO — sin cambio | Colisión NPC centrada en origin (feet). Con body 48px la colisión cubre solo los 15px inferiores del visual. Interaction sigue funcionando (player y:152-200 solapa con NPC y:185-215). Ajustar si afecta a la sensación de interacción en playtest. |
 
 ## Known Gotchas
 
@@ -195,6 +215,7 @@ Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 | ID | Descripción | Archivos |
 |----|-------------|----------|
 | D-28 | Diálogo de la madre trasladado de la entrada al haz de luz a la recogida de la caja de música. `_dialogue_shown` eliminado. Re-lock tras `await dialogue_finished` porque `DialogueManager` auto-desbloquea al emitir la señal. | `habitacion_scene.gd`, `game_text.csv` (ES/EN "Sal"/"Come out") |
+| D-29 | Tamaños de placeholder pasan a ADULTO 16×48 y NIÑO 10×32. Centralizado en `scripts/sizes.gd` (class_name Sizes). Origin del player en y=176 (pies y=200). NPC de pie: 48px, sentados: 34px. `set_form(CHILD)` mantiene `offset_bottom=ADULT_HEIGHT/2=24` para que los pies no salten al cambiar de forma. `habitacion.tscn` player corregido de y=200 a y=176 (pre-existente, inconsistente con D-27). NPC CollisionShape2D (24×30) y clamp 8/472 sin cambio (ver aviso en "Checks D-29"). | `scripts/sizes.gd` (nuevo), `scripts/player.gd`, `scripts/npc.gd`, `scene/actors/player.tscn`, `scene/actors/npc.tscn`, `scene/salon.tscn`, `scene/pasillo.tscn`, `scene/habitacion.tscn` |
 
 ---
 

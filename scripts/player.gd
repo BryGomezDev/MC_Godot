@@ -59,13 +59,14 @@ func set_form(form: Form) -> void:
 		var cr := body as ColorRect
 		if form == Form.ADULT:
 			cr.color = Color(0.2, 0.4, 0.8)
-			cr.offset_left = -6.0
-			cr.offset_top = -10.0
-			cr.offset_right = 6.0
-			cr.offset_bottom = 10.0
+			cr.offset_left = -Sizes.ADULT_WIDTH / 2.0
+			cr.offset_top = -Sizes.ADULT_HEIGHT / 2.0
+			cr.offset_right = Sizes.ADULT_WIDTH / 2.0
+			cr.offset_bottom = Sizes.ADULT_HEIGHT / 2.0
 		else:
 			cr.color = Color(0.8, 0.4, 0.2)
-			cr.offset_left = -5.0
-			cr.offset_top = -4.0
-			cr.offset_right = 5.0
-			cr.offset_bottom = 10.0
+			cr.offset_left = -Sizes.CHILD_WIDTH / 2.0
+			# ponytail: bottom fixed to ADULT_HEIGHT/2 so feet stay at same y in both forms
+			cr.offset_top = -(Sizes.CHILD_HEIGHT - Sizes.ADULT_HEIGHT / 2.0)
+			cr.offset_right = Sizes.CHILD_WIDTH / 2.0
+			cr.offset_bottom = Sizes.ADULT_HEIGHT / 2.0

@@ -6,7 +6,7 @@ extends Interactable
 @export var required: bool = false
 @export var speaker_key: String = ""
 @export var body_color: Color = Color(0.6, 0.2, 0.2, 1)
-@export var body_height: int = 20
+@export var body_height: int = Sizes.NPC_STANDING_HEIGHT
 @export var show_body: bool = true
 
 var _spoken: bool = false

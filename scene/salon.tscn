@@ -67,7 +67,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Player" parent="." instance=ExtResource("2")]
-position = Vector2(20.0, 190.0)
+position = Vector2(20.0, 176.0)
 
 [node name="NPC_Mama" parent="." instance=ExtResource("3")]
 position = Vector2(88.0, 200.0)
@@ -76,7 +76,7 @@ dialogue_keys = ["NPC_MAMA_1", "NPC_MAMA_2"]
 required = true
 speaker_key = "SPEAKER_MAMA"
 body_color = Color(0.85, 0.35, 0.35, 1)
-body_height = 20
+body_height = 48
 
 [node name="NPC_Hermano" parent="." instance=ExtResource("3")]
 position = Vector2(148.0, 200.0)
@@ -85,7 +85,7 @@ dialogue_keys = ["NPC_HERMANO_1", "NPC_HERMANO_2"]
 required = true
 speaker_key = "SPEAKER_HERMANO"
 body_color = Color(0.3, 0.4, 0.8, 1)
-body_height = 14
+body_height = 34
 
 [node name="NPC_Cunada" parent="." instance=ExtResource("3")]
 position = Vector2(198.0, 200.0)
@@ -94,7 +94,7 @@ dialogue_keys = ["NPC_CUNADA_1", "NPC_CUNADA_2"]
 required = true
 speaker_key = "SPEAKER_CUNADA"
 body_color = Color(0.2, 0.65, 0.6, 1)
-body_height = 14
+body_height = 34
 
 [node name="NPC_Esposa" parent="." instance=ExtResource("3")]
 position = Vector2(260.0, 200.0)
@@ -103,7 +103,7 @@ dialogue_keys = ["NPC_ESPOSA_1", "NPC_ESPOSA_2"]
 required = true
 speaker_key = "SPEAKER_ESPOSA"
 body_color = Color(0.65, 0.3, 0.75, 1)
-body_height = 20
+body_height = 48
 
 [node name="NPC_Hija" parent="." instance=ExtResource("3")]
 position = Vector2(308.0, 200.0)
@@ -112,7 +112,7 @@ dialogue_keys = ["NPC_HIJA_1", "NPC_HIJA_2"]
 required = true
 speaker_key = "SPEAKER_HIJA"
 body_color = Color(0.9, 0.65, 0.2, 1)
-body_height = 14
+body_height = 34
 
 [node name="NPC_Sobrino" parent="." instance=ExtResource("3")]
 position = Vector2(355.0, 200.0)
@@ -121,7 +121,7 @@ dialogue_keys = ["NPC_SOBRINO_1", "NPC_SOBRINO_2"]
 required = true
 speaker_key = "SPEAKER_SOBRINO"
 body_color = Color(0.3, 0.7, 0.35, 1)
-body_height = 14
+body_height = 34
 
 [node name="ExitZone" type="Area2D" parent="."]
 position = Vector2(470.0, 135.0)
