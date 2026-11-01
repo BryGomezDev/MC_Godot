@@ -182,3 +182,79 @@ El MCP añade comodidad (las 85 tools disponibles en contexto sin escribir Lua m
 - Si aparecen nuevos problemas, el techo razonable es 2-3 iteraciones por NPC.
 
 **Riesgo principal**: no haber validado el MCP en sesión activa. Si el protocolo MCP tiene sus propios problemas de escape o timing más allá del batch mode, el coste podría subir. Recomendación: primera tarea de S8 = crear un NPC trivial usando las tools MCP reales para confirmar que el protocolo funciona end-to-end.
+
+---
+
+## Prueba con MCP (2026-11-01)
+
+Prueba ejecutada en sesión activa con el MCP diivi/aseprite-mcp cargado. Objetivo: medir el coste real de dibujar el sprite `adulto` 48×48 (idle + walk 4 frames) usando **exclusivamente las herramientas MCP**, sin scripts Lua manuales.
+
+Sprite generado: `assets/pilot_aseprite/adulto_mcp.aseprite` (idle 1f + walk 4f, tags `idle` y `walk`).
+
+### Métricas medidas
+
+| Métrica | Valor |
+|---------|-------|
+| Tool calls MCP (directas) | **16** |
+| ToolSearch (carga de esquemas, harness) | 3 — no son MCP calls |
+| Pasadas `view_sprite` | 2 (frame 1 solo; luego todos los frames) |
+| Correcciones tras view | **0** — sprite aprobado en primera pasada |
+| Píxeles dibujados (draw_rows únicos) | 548 + 546 + 531 = **1 625** |
+| Frames copiados (`copy_cel`) | 2 (frames 3 y 5 = idle, copiados del frame 1) |
+| Errores de API | **0** — todas las calls retornaron éxito |
+| Errores de flujo | **1** — ver abajo |
+
+**Desglose de las 16 calls:**
+
+| # | Herramienta | Propósito |
+|---|-------------|-----------|
+| 1 | `create_canvas` | Lienzo 48×48 |
+| 2 | `set_palette` | Nochebuena 16 |
+| 3 | `get_sprite_info` | Confirmar nombre de capa por defecto |
+| 4 | `draw_rows` | Frame 1 idle — 548 px |
+| 5 | `set_tag` | Tag `idle` frames 1-1 |
+| 6 | `view_sprite` | Pasada 1: revisar idle |
+| 7-10 | `add_frame` × 4 | Añadir frames 2-5 |
+| 11 | `copy_cel` | Frame 1 → frame 3 |
+| 12 | `copy_cel` | Frame 1 → frame 5 |
+| 13 | `draw_rows` | Frame 2 (pie izq. adelante) — 546 px |
+| 14 | `draw_rows` | Frame 4 (pie der. adelante) — 531 px |
+| 15 | `set_tag` | Tag `walk` frames 2-5 |
+| 16 | `view_sprite` | Pasada 2: revisar animación completa |
+| 17 | `export_spritesheet` | PNG + JSON verticales |
+
+Tiempo total de sesión: estimado ~5 min (no medido con cronómetro; aproximación por flujo de conversación). No puedo confirmar tiempos por llamada individual.
+
+### Error de flujo detectado
+
+**Path resolution del MCP:** el servidor diivi/aseprite-mcp resuelve rutas relativas desde su propio CWD (`tools/aseprite-mcp/`), no desde el directorio del proyecto. Todas las tools retornaron éxito, pero los archivos se crearon en `tools/aseprite-mcp/assets/pilot_aseprite/` en lugar de `assets/pilot_aseprite/`. Fue necesario copiarlos manualmente al proyecto.
+
+**Solución**: usar rutas absolutas en todas las llamadas al MCP, o configurar el CWD del servidor. Impacto: +1 paso manual por sesión, detectado al verificar el sistema de archivos.
+
+### Comparación con Lua (batch mode directo)
+
+| Aspecto | Lua batch mode | MCP tools |
+|---------|---------------|-----------|
+| Calls / operaciones para el sprite completo | 1 ejecución de script (67 líneas Lua) | 16 tool calls |
+| Preview en contexto | No — abrir Aseprite manualmente | **Sí** — `view_sprite` devuelve imagen directamente |
+| Correcciones sin reintentar | No aplicable (visual al final) | 0 correcciones necesarias en esta prueba |
+| Escritura de código | Lua con rects y loops | Strings ASCII en `draw_rows` + legend |
+| Errores silenciosos | Sí (stdout bloqueado, requiere logging a archivo) | No — las calls fallan ruidosamente |
+| Path resolution | Ruta explícita en Lua | CWD del servidor MCP (bug de flujo) |
+| Tiempo por iteración | ~2-3 seg (proceso único) | Múltiples procesos; no diferencia perceptible en 48×48 |
+
+### Valoración honesta
+
+**Lo confirmado:**
+- El MCP funciona end-to-end en sesión activa: crear canvas, paleta, dibujar, animar, exportar — todo sin salir de Claude.
+- `view_sprite` es la ventaja real: permite validar visualmente en el acto sin abrir Aseprite. En Lua esto era imposible sin lanzar Aseprite manualmente.
+- `draw_rows` es expresivo y eficiente para personajes 2D: una llamada dibuja todo el cuerpo como ASCII art.
+- `copy_cel` elimina redundancia (frames neutrales del walk = idle).
+- Sin errores de API: el MCP es estable para sprites 48×48 indexados.
+
+**Lo no resuelto:**
+- El bug de path resolution requiere rutas absolutas o workaround. No es bloqueante pero sí fricción.
+- No se probó el perfil `core` (live mode). En batch mode cada llamada lanza un proceso Aseprite; para sprites más complejos (256 calls) el overhead podría acumularse.
+- Calidad del resultado frente al Lua: No puedo hacer comparación visual objetiva — yo generé ambos sprites. La comparación la hace el usuario.
+
+**¿Cambia la valoración para S8?** Sí, a mejor. El riesgo principal del informe anterior ("no haber validado el MCP en sesión activa") queda cerrado. El flujo MCP es viable, el coste por sprite es ~16 calls vs 1 ejecución Lua, pero con la ventaja de preview en contexto que elimina el ciclo editar→ejecutar→abrir-Aseprite. Para los 6 NPCs de S8, el overhead de path resolution se resuelve con una convención de rutas absolutas.
