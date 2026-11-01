@@ -88,25 +88,31 @@ DialogueBox.page_done    → DialogueManager._on_page_done() → next page or fi
 
 ### `scripts/habitacion_scene.gd` — Node2D (`class_name HabitacionScene`)
 
-State machine con enum `State { EXPLORING, FLASHBACK, ESCAPE, PAUSE, MUSIC, DONE }`.
+State machine con enum `State { EXPLORING, FLASHBACK, ESCAPE, ESPERA, MUSICA, MIRA_ARRIBA, SCROLL, MENSAJE }`.
 
 **Transiciones:**
 - `EXPLORING → FLASHBACK`: Player entra en BeamZone. Pone `GameState.flashback_visto = true`, llama `player.set_form(CHILD)`, sube tinte. Sin diálogo ni lock aquí (D-28).
 - `FLASHBACK → EXPLORING`: Player sale de BeamZone sin coger la caja. Vuelve a ADULT, apaga tinte.
-- `FLASHBACK → ESCAPE`: Player interactúa con CajaDMusica. Oculta caja, bloquea Player, lanza `DialogueManager.start(["FLASHBACK_MAMA_1","FLASHBACK_MAMA_2"], "SPEAKER_MAMA")`, `await DialogueManager.dialogue_finished` (Player sigue niño, tinte activo). Tras el await: re-lock (DialogueManager auto-desbloquea al emitir), estado → ESCAPE, inicia Tween hacia `x = 240 - 20 = 220` a `escape_speed`. Respaldo: si el Tween termina y sigue en ESCAPE, fuerza PAUSE.
-- `ESCAPE → PAUSE`: `body_exited` de BeamZone **o** tween completado. Vuelve a ADULT, apaga tinte, espera `connect_pause_seconds`.
-- `PAUSE → MUSIC`: reproduce `MusicPlayer` (si `music_stream` es null → `push_warning` y continúa). Espera `music_hold_seconds`.
-- `MUSIC → DONE`: `SceneManager.change_scene("res://scene/final.tscn")`.
-- Desde ESCAPE en adelante el Player queda bloqueado. `_exit_tree()` mata ambos Tweens.
+- `FLASHBACK → ESCAPE`: Player interactúa con CajaDMusica. Oculta caja, bloquea Player, lanza `DialogueManager.start(["FLASHBACK_MAMA_1","FLASHBACK_MAMA_2"], "SPEAKER_MAMA")`, `await DialogueManager.dialogue_finished` (Player sigue niño, tinte activo). Tras el await: re-lock (DialogueManager auto-desbloquea al emitir), estado → ESCAPE, inicia Tween hacia `x = 240 - 20 = 220` a `escape_speed`. Respaldo: si el Tween termina y sigue en ESCAPE, fuerza ESPERA.
+- `ESCAPE → ESPERA`: `body_exited` de BeamZone **o** tween completado. Vuelve a ADULT, apaga tinte. Espera `prompt_delay_seconds` y muestra prompt `[E] Reproducir` (PromptLayer).
+- `ESPERA → MUSICA`: Player pulsa "interact" con el prompt visible. Reproduce `MusicPlayer` (si `music_stream` es null → `push_warning` y continúa). Oculta prompt.
+- `MUSICA → MIRA_ARRIBA`: tras `look_up_seconds`. Placeholder para animación futura.
+- `MIRA_ARRIBA → SCROLL`: inmediato. Inicia tween de Camera2D subiendo `scroll_distance` px en `scroll_seconds`.
+- `SCROLL → MENSAJE`: al completar el tween de Camera2D. Muestra los mensajes finales uno a uno con fade-in.
+- Desde ESCAPE en adelante el Player queda bloqueado. `_exit_tree()` mata todos los Tweens activos.
 
 **@export (HabitacionScene):**
-| Variable | Tipo | Default |
-|----------|------|---------|
-| `tint_alpha` | float | 0.25 |
-| `escape_speed` | float | 140.0 |
-| `connect_pause_seconds` | float | 1.5 |
-| `music_hold_seconds` | float | 4.0 |
-| `music_stream` | AudioStream | null |
+| Variable | Tipo | Default | Descripción |
+|----------|------|---------|-------------|
+| `tint_alpha` | float | 0.25 | Opacidad máx del tinte de flashback |
+| `escape_speed` | float | 140.0 | px/s del tween de escape |
+| `prompt_delay_seconds` | float | 1.0 | Pausa antes de mostrar prompt "[E] Reproducir" |
+| `look_up_seconds` | float | 1.5 | Duración del estado MIRA_ARRIBA (placeholder) |
+| `scroll_distance` | float | 540.0 | px que sube la cámara |
+| `scroll_seconds` | float | 12.0 | Duración del scroll de cámara |
+| `message_fade_seconds` | float | 2.0 | Duración del fade-in de cada mensaje final |
+| `message_gap_seconds` | float | 1.5 | Pausa entre mensajes finales |
+| `music_stream` | AudioStream | null | Stream de audio; asignar en editor |
 
 ### `scripts/salon_scene.gd` — Node2D
 - Connects `GameState.all_required_done` and `ExitZone.body_entered`
@@ -165,6 +171,8 @@ Claves activas:
 Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 - `FLASHBACK_MAMA_1/2` — diálogos flashback habitación (voz de la madre): la madre avisa de que han llegado los abuelos. [TEMP]
 - `SPEAKER_MAMA` — ya existía
+- `PROMPT_PLAY` — texto del prompt "[E] Reproducir" en estado ESPERA
+- `FINAL_MSG_1/2/3` — mensajes finales mostrados tras el scroll de cámara [TEMP]
 
 ---
 
@@ -189,8 +197,12 @@ Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 | `dialogue_box.gd` | `font_size_text` | int | 10 |
 | `habitacion_scene.gd` | `tint_alpha` | float | 0.25 |
 | `habitacion_scene.gd` | `escape_speed` | float | 140.0 |
-| `habitacion_scene.gd` | `connect_pause_seconds` | float | 1.5 |
-| `habitacion_scene.gd` | `music_hold_seconds` | float | 4.0 |
+| `habitacion_scene.gd` | `prompt_delay_seconds` | float | 1.0 |
+| `habitacion_scene.gd` | `look_up_seconds` | float | 1.5 |
+| `habitacion_scene.gd` | `scroll_distance` | float | 540.0 |
+| `habitacion_scene.gd` | `scroll_seconds` | float | 12.0 |
+| `habitacion_scene.gd` | `message_fade_seconds` | float | 2.0 |
+| `habitacion_scene.gd` | `message_gap_seconds` | float | 1.5 |
 | `habitacion_scene.gd` | `music_stream` | AudioStream | null |
 
 ---
@@ -210,6 +222,8 @@ Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 - **`class_name` en hot-reload (MCP)**: Al añadir class_name puede aparecer el error código 43 durante la recarga en caliente del plugin MCP. Solución: recargar el plugin (`editor_reload_plugin`) y volver a comprobar los logs. No revierte la class_name — el error es del hot-reload, no del código.
 - **DialogueManager en npc.gd**: acceso directo por nombre global (`DialogueManager.start(...)`) — los autoloads son globales en Godot 4 y no necesitan get_node ni ruta de texto.
 - **tr("") returns ""**: Passing empty speaker_key through tr() is safe — the SpeakerLabel is hidden when speaker == "".
+- **Nieve (D-32):** CPUParticles2D obligatorio (no GPUParticles2D). El export a Web usa GL Compatibility renderer; GPUParticles2D solo funciona con Forward+ o Mobile.
+- **Loop de audio (D-31):** `(stream as AudioStreamOggVorbis).loop = true` en código antes de `play()`. El `.ogg` debe estar en `audio/silent_night_musicbox_full.ogg`.
 
 ---
 
@@ -221,6 +235,9 @@ Eliminadas: `TEST_NPC_A_*`, `TEST_NPC_B_*` (NPCs de prueba ya no existen)
 | D-29 | Tamaños placeholder ADULTO 16×48. Centralizado en `scripts/sizes.gd`. Origin player en y=176. NPC de pie: 48px, sentados: 34px. NIÑO ahora derivado de `child_scale=0.7` en runtime (eliminados CHILD_WIDTH/HEIGHT de Sizes). Player z_index=2 en todas las escenas (NPC default=0 — Player se dibuja siempre delante). | `scripts/sizes.gd`, `scripts/player.gd`, `scene/actors/player.tscn`, `scene/salon.tscn`, `scene/pasillo.tscn`, `scene/habitacion.tscn` |
 | D-25 | HintLabel "[ E ]" del cuadro de diálogo salía cortado por el borde inferior derecho. Causa: offsets absolutos (478px, 63px) demasiado cerca del borde del Panel (480×65). Fix: anchor bottom-right (1,1,1,1), offsets -88/-20/-4/-4 — independiente del tamaño del Panel. | `ui/dialogue_box.tscn` |
 | D-26 | HintLabel "E" del NPC permanecía visible tras agotar la conversación mientras el player seguía dentro del área. Causa raíz: `_on_dialogue_finished()` ponía `_spoken=true` pero no ocultaba el hint; solo `_on_body_entered` lo ocultaba (al salir y volver a entrar). Fix: ocultar hint en `_on_interacted()` (al iniciar) y en `_on_dialogue_finished()` (al terminar). | `scripts/npc.gd` |
+| D-30 | BoxInHand: ColorRect hijo de Player, `visible=false` hasta que el player toma la caja de música. | `scene/actors/player.tscn`, `scripts/habitacion_scene.gd` |
+| D-31 | FSM: estados PAUSE/MUSIC/DONE reemplazados por ESPERA/MUSICA/MIRA_ARRIBA/SCROLL/MENSAJE. Variables eliminadas: `connect_pause_seconds`, `music_hold_seconds`. Añadidas: `prompt_delay_seconds`, `look_up_seconds`, `scroll_distance`, `scroll_seconds`, `message_fade_seconds`, `message_gap_seconds`. Loop de audio configurado en código. | `scripts/habitacion_scene.gd`, `game_text.csv` (PROMPT_PLAY, FINAL_MSG_1/2/3) |
+| D-32 | Escena Exterior: nodos Sky, Tejado, Chimenea, Estrellas, CPUParticles2D (nieve). Camera2D con scroll. PromptLayer (CanvasLayer). FinalMessages con 3 Labels (FINAL_MSG_1/2/3). | `scene/habitacion.tscn` (exterior) |
 
 ---
 

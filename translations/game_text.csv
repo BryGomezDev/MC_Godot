@@ -31,3 +31,7 @@ NPC_PAPA_2,[TEMP] ¡Feliz Nochebuena! Estamos todos reunidos. Qué bien.,[TEMP] 
 DOOR_OTHER_1,[TEMP] Esta puerta está cerrada.,[TEMP] This door is closed.
 FLASHBACK_MAMA_1,[TEMP] ¡Han llegado los abuelos! Sal a saludarles.,[TEMP] The grandparents are here! Come out and say hello.
 FLASHBACK_MAMA_2,[TEMP] ¡Venga, date prisa! Están esperando abajo.,[TEMP] Come on, hurry up! They are waiting downstairs.
+PROMPT_PLAY,Reproducir,[TEMP] Play
+FINAL_MSG_1,"Hubo una Navidad en la que nadie faltaba a la mesa.","[TEMP] There was a Christmas when no one was missing from the table."
+FINAL_MSG_2,"Por aquellos que hoy no están pero nunca se fueron,","[TEMP] For those who aren''t here tonight but never left,"
+FINAL_MSG_3,Feliz Navidad,[TEMP] Merry Christmas
