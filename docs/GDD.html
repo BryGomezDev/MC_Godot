@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Merry Christmas · GDD v0.4</title>
+<title>Merry Christmas · GDD v0.6</title>
 <style>
   :root{--bg:#fbfaf7;--fg:#1f2a24;--muted:#5d6b63;--line:#e3e0d6;--acc:#9b2d2d;--acc2:#2f5d46;--card:#ffffff;--warn:#fff4d6;--ok:#e3f2e8;--open:#fde7e7}
   @media (prefers-color-scheme:dark){:root{--bg:#141a17;--fg:#e8ece9;--muted:#9aa9a0;--line:#2b3631;--acc:#e08585;--acc2:#7fc4a0;--card:#1b2420;--warn:#3a321a;--ok:#1d3326;--open:#3a2020}}
@@ -40,8 +40,8 @@
   <h1>Merry Christmas — Game Design Document</h1>
   <p>Felicitación navideña jugable · Nochebuena · ≤ 5 minutos · 3 escenarios</p>
   <div class="meta">
-    <span class="tag">GDD v0.4</span>
-    <span class="tag">25-oct-2026</span>
+    <span class="tag">GDD v0.6</span>
+    <span class="tag">1-nov-2026</span>
     <span class="tag">Godot 4.7.2</span>
     <span class="tag">Web (HTML5) → itch.io</span>
     <span class="tag">ES / EN</span>
@@ -92,8 +92,8 @@
     <tr><td>0</td><td>Título</td><td>Elegir idioma y pulsar para empezar (también sirve de primer gesto para el audio en navegador)</td><td>Salón</td></tr>
     <tr><td>1</td><td>Salón</td><td>Hablar con los 6 NPC</td><td>Puerta al pasillo se desbloquea</td></tr>
     <tr><td>2</td><td>Pasillo</td><td>Hablar con el padre (puerta de la izquierda); la puerta central es de descarte</td><td>Se enciende el haz de luz al fondo</td></tr>
-    <tr><td>3</td><td>Habitación</td><td>Entrar en el haz de luz de luna → flashback → coger la caja → salir corriendo del haz</td><td>Suena "Noche de paz"</td></tr>
-    <tr><td>4</td><td>Final</td><td>Sin control: la cámara sube hacia el exterior, noche nevada, mensaje y "Feliz Navidad"</td><td>Fin</td></tr>
+    <tr><td>3</td><td>Habitación</td><td>Entrar en el haz de luz de luna → flashback → coger la caja (se queda en sus manos) → salir corriendo del haz, ya adulto</td><td>El personaje mira la caja y aparece «[E] Reproducir»</td></tr>
+    <tr><td>4</td><td>Final</td><td>Pulsar E: suena «Noche de paz», el personaje mira hacia arriba y la cámara sube hacia el exterior (noche nevada); aparece el mensaje y "Feliz Navidad"</td><td>Fin</td></tr>
   </table>
 </section>
 
@@ -120,23 +120,23 @@
   <ul>
     <li>Habitación a oscuras; un haz de luz de luna entra por el balcón e ilumina la mitad de la estancia.</li>
     <li>Dentro del haz, sobre una mesa, un objeto resaltado: la caja de música.</li>
-    <li><b>Entrar en el haz:</b> el sprite del jugador pasa a ser él mismo de niño y comienza el flashback.</li>
-    <li><b>Flashback:</b> al otro lado de la puerta se oye (texto) a la madre decir que los abuelos han llegado. En la realidad, los abuelos ya no están.</li>
-    <li><b>Coger la caja:</b> el jugador interactúa con el objeto y el niño sale corriendo del haz (huida automática, sin control) por el lado por el que entró. Al cruzar el borde del haz por segunda vez vuelve a la realidad y a ser adulto.</li>
-    <li><b>Si sale del haz sin haber cogido la caja</b> vuelve a ser adulto y puede reintentarlo; los diálogos del flashback no se repiten (propuesta, ver D-23).</li>
-    <li><b>Pausa breve:</b> el juguete "conecta". Después empieza a sonar "Noche de paz" (estribillo en bucle, sonitono de caja de música) y comienza el final. El juego termina ahí, sin más interacción.</li>
+    <li><b>Entrar en el haz:</b> el sprite del jugador pasa a ser él mismo de niño (≈70 % del tamaño adulto, provisional) y un tinte cálido cubre la pantalla. Comienza el flashback, sin diálogo y sin perder el control (D-28).</li>
+    <li><b>Flashback:</b> al coger la caja se oye (texto) a la madre, al otro lado de la puerta, decir que los abuelos han llegado. En la realidad, los abuelos ya no están.</li>
+    <li><b>Coger la caja:</b> el jugador interactúa con el objeto, se queda con la caja en las manos (nunca vuelve a la mesa) y pierde el control. Sale el diálogo de la madre y, al terminar, el niño sale corriendo del haz (huida automática, sin control) por el lado por el que entró. Al cruzar el borde del haz por segunda vez vuelve a la realidad y a ser adulto (D-28).</li>
+    <li><b>Si sale del haz sin haber cogido la caja</b> vuelve a ser adulto y puede reintentarlo (ver D-23).</li>
+    <li><b>Tras la huida:</b> ya adulto, el personaje mira la caja que lleva en las manos y aparece «[E] Reproducir». Al pulsar E empieza a sonar «Noche de paz» (versión completa en bucle, con timbre de caja de música) y comienza el final (D-30).</li>
   </ul>
   <h3>Máquina de estados de la habitación</h3>
-<pre>EXPLORANDO ──(entra en haz)──▶ FLASHBACK ──(interactúa con caja)──▶ HUIDA ──(sale del haz: 2º cruce)──▶ PAUSA ──▶ MÚSICA ──▶ FINAL
-   adulto        ▲                sprite niño      huida automática,        vuelve adulto            "conecta"   suena, sin control
-                 └─(sale sin caja: vuelve adulto)   sin control</pre>
+<pre>EXPLORANDO ──(entra en haz)──▶ FLASHBACK ──(interactúa con caja)──▶ HUIDA ──(sale del haz: 2º cruce)──▶ ESPERA ──(pulsa E)──▶ MÚSICA ──▶ SCROLL ──▶ MENSAJE
+   adulto        ▲                niño, con control     diálogo de la madre (sin control)   vuelve adulto    mira la caja     suena       mira arriba   exterior    sin control
+                 └─(sale sin caja: vuelve adulto)        y luego huida automática            «[E] Reproducir»                              y empieza    nevado</pre>
 
   <h3>4.4 Final</h3>
   <ul>
-    <li>La cámara se desplaza en vertical hacia fuera de la casa: exterior nocturno, nieve, tejado y cielo.</li>
+    <li>Al pulsar E suena la música, el personaje mira hacia arriba y la cámara se desplaza en vertical, de forma continua, hacia fuera de la casa: exterior nocturno, nieve, tejado y cielo. Misma escena, con el exterior dibujado encima de la habitación (D-30).</li>
     <li>Requiere arte exterior situado sobre la habitación (silueta de la casa, cielo, nieve).</li>
     <li>Aparece un mensaje breve, recordando los viejos tiempos y a los que ya no están, y termina con "Feliz Navidad".</li>
-    <li>El texto del mensaje lo redacta Claude y lo aprueba Brayan.</li>
+    <li>El mensaje va dirigido a los que faltan en la mesa: los abuelos que en el flashback "ya han llegado" y en la realidad ya no están. El texto lo redacta Claude y lo aprueba Brayan. Texto aprobado por Brayan (D-32): «Hubo una Navidad en la que nadie faltaba a la mesa. Por aquellos que hoy no están pero nunca se fueron, Feliz Navidad.» La versión en inglés está pendiente de su revisión (O-09).</li>
   </ul>
 </section>
 
@@ -181,7 +181,7 @@
 │  ├─ salon.tscn · pasillo.tscn · habitacion.tscn · final.tscn
 │  └─ actors/ player.tscn · npc.tscn
 ├─ ui/ dialogue_box.tscn · transition.tscn
-├─ scripts/ game_state.gd · scene_manager.gd · interactable.gd
+├─ scripts/ game_state.gd · scene_manager.gd · interactable.gd · sizes.gd
 ├─ translations/ game_text.csv
 ├─ art/ · audio/
 ├─ docs/ GDD.html · informes de sesión
@@ -202,13 +202,13 @@
     <li>Todo el juego jugable primero con placeholders (formas y colores).</li>
     <li>Después, sprites gratuitos de packs con licencia clara; si no hay sprites adecuados, arte generado con IA como plan B.</li>
   </ol>
-  <div class="box warn"><b>Requisito crítico de arte:</b> necesitamos un personaje coherente en versión adulta y versión niño (misma identidad visual) y 7 NPC reconocibles. Es el criterio que más va a limitar la elección del pack.</div>
+  <div class="box warn"><b>Requisito crítico de arte:</b> necesitamos un personaje coherente en versión adulta y versión niño (misma identidad visual) y 7 NPC reconocibles, más las poses del adulto mirando la caja y mirando hacia arriba (D-30). Es el criterio que más va a limitar la elección del pack.</div>
   <h3>Registro de licencias (obligatorio antes de publicar)</h3>
   <table>
     <tr><th>Recurso</th><th>Origen</th><th>Licencia</th><th>Estado</th></tr>
     <tr><td>Sprites personajes</td><td>Por decidir</td><td>—</td><td><span class="st o">Pendiente</span></td></tr>
     <tr><td>Fondos / mobiliario</td><td>Por decidir</td><td>—</td><td><span class="st o">Pendiente</span></td></tr>
-    <tr><td>Sonitono "Noche de paz" (estribillo)</td><td>Brayan lo extrae de internet</td><td>Según Brayan, tono genérico sin licencia (no verificado). Anotar la URL de origen</td><td><span class="st p">Asumido</span></td></tr>
+    <tr><td>Música «Noche de paz» (caja de música)</td><td>Generada por Claude con síntesis propia a partir de un RTTL de Brayan; melodía contrastada con una transcripción ABC</td><td>Melodía de Gruber (1818), de dominio público según Wikipedia. Sin archivos ni grabaciones de terceros. No es asesoramiento legal</td><td><span class="st p">Propuesto; pendiente de que Brayan la apruebe</span></td></tr>
     <tr><td>SFX y ambiente</td><td>Por decidir</td><td>—</td><td><span class="st o">Pendiente</span></td></tr>
   </table>
   <p class="small">Nota: los assets de Kenney son CC0 (confirmado en su página de soporte). OpenGameArt mezcla licencias: hay que revisar cada recurso.</p>
@@ -235,10 +235,11 @@
     <tr><th>Riesgo</th><th>Impacto</th><th>Mitigación</th></tr>
     <tr><td>Sprites adulto/niño coherentes no disponibles en packs gratuitos</td><td>Alto</td><td>Decidir el origen del arte pronto; plan B con IA o edición de sprites</td></tr>
     <tr><td>Duración por encima de 5 min</td><td>Medio</td><td>Texto corto; medir con una partida cronometrada</td></tr>
-    <tr><td>Licencia del sonitono de "Noche de paz"</td><td>Bajo–medio</td><td>Brayan lo considera un tono genérico sin licencia; no está verificado. Anotar el origen; sustituible por una versión sintetizada</td></tr>
+    <tr><td>Licencia de la música de "Noche de paz"</td><td>Bajo</td><td>Sustituido el sonitono externo por audio generado a partir de la melodía de dominio público (D-31). Sigue sin ser asesoramiento legal</td></tr>
     <tr><td>Audio y compatibilidad en navegador (Safari/macOS)</td><td>Medio</td><td>Pantalla de título con clic; probar en varios navegadores antes de publicar. La documentación consultada contiene una nota sobre macOS/iOS que no se ha podido confirmar para 4.7</td></tr>
     <tr><td>Arte exterior para el final (casa, cielo, nieve)</td><td>Medio</td><td>Silueta simple + partículas de nieve; probar CPU vs GPU en web</td></tr>
     <tr><td>Fuente tipográfica por defecto desentona con el pixel art y ya causó un solape en el diálogo</td><td>Bajo</td><td>Tamaños provisionales (D-25); elegir fuente con licencia verificada (O-07)</td></tr>
+    <tr><td>Colisiones de los placeholders no coinciden con el visual: la del niño sigue en 16×48 (visual ≈ 11×33) y la de los NPC mide 24×30 con cuerpo de 48 (según las dev-notes de Claude Code)</td><td>Bajo</td><td>Funciona en el playtest; revisar al llegar el arte definitivo (S8)</td></tr>
     <tr><td>Telemetría anónima del plugin godot-ai (según su README)</td><td>Bajo</td><td>Revisar ajustes del plugin si se quiere desactivar</td></tr>
   </table>
 </section>
@@ -259,21 +260,26 @@
     <tr><td>D-10</td><td>Tono: cariñoso, con una elección opcional por NPC; sin puzzles</td><td>Brayan (recomendación aceptada)</td></tr>
     <tr><td>D-11</td><td>Idiomas ES y EN</td><td>Brayan</td></tr>
     <tr><td>D-12</td><td>Brayan aprueba todos los diálogos</td><td>Brayan</td></tr>
-    <tr><td>D-13</td><td>Música: sonitono de "Noche de paz" externo, estribillo en bucle</td><td>Brayan</td></tr>
+    <tr><td>D-13</td><td>Música: sonitono de "Noche de paz" externo, estribillo en bucle. Sustituida por D-31</td><td>Brayan</td></tr>
     <tr><td>D-14</td><td>Todos los prompts a Claude Code: subagentes especializados y commit + push al final</td><td>Brayan</td></tr>
     <tr><td>D-15</td><td>Pantalla de título con selector de idioma; export single-thread; resolución 480×270 con escala entera; textos en CSV</td><td>Claude (propuesta, salvo veto)</td></tr>
-    <tr><td>D-16</td><td>La música arranca cuando el jugador cruza el haz de luz por segunda vez y vuelve a la realidad; hay una pequeña pausa en la que el juguete "conecta", después suena y termina el juego</td><td>Brayan</td></tr>
+    <tr><td>D-16</td><td>La música arranca cuando el jugador cruza el haz de luz por segunda vez y vuelve a la realidad; hay una pequeña pausa en la que el juguete "conecta", después suena y termina el juego. Sustituida por D-30</td><td>Brayan</td></tr>
     <tr><td>D-17</td><td>Nombres de NPC como placeholders por rol, sin nombres reales</td><td>Brayan</td></tr>
     <tr><td>D-18</td><td>Repositorio: github.com/BryGomezDev/MC_Godot; GDD en <code>docs/</code></td><td>Brayan</td></tr>
     <tr><td>D-19</td><td>Todo prompt a Claude Code empieza asignándole un rol explícito</td><td>Brayan</td></tr>
     <tr><td>D-20</td><td>Pasillo con una tercera puerta decorativa al fondo que enmarca el haz de luz; puerta del padre a la izquierda y de descarte en el centro</td><td>Claude Code (aceptada salvo veto)</td></tr>
     <tr><td>D-21</td><td>Código: <code>class_name</code> en todo script que no sea autoload; autoloads (GameState, SceneManager, DialogueManager) sin <code>class_name</code> y por nombre global</td><td>Brayan</td></tr>
     <tr><td>D-22</td><td>El playtesting lo hace Brayan; Claude Code solo hace comprobación estática. Los valores <code>@export</code> son provisionales y los balancea Brayan</td><td>Brayan</td></tr>
-    <tr><td>D-23</td><td>Habitación: la huida es automática y sale por el lado de entrada; si el jugador sale del haz sin la caja vuelve a ser adulto y puede reintentar sin repetir diálogos</td><td>Claude (propuesta, a validar)</td></tr>
+    <tr><td>D-23</td><td>Habitación: la huida es automática y sale por el lado de entrada; si el jugador sale del haz sin la caja vuelve a ser adulto y puede reintentar</td><td>Claude (propuesta); validada en playtest</td></tr>
     <tr><td>D-24</td><td>Tras la música, cambio provisional a la escena final; el movimiento de cámara se decide en O-06</td><td>Claude (propuesta)</td></tr>
-    <tr><td>D-25</td><td>Cuadro de diálogo: nombre y texto en un contenedor vertical (no pueden solaparse), fuentes más pequeñas y borde superior del panel en y≈205 para no tapar los pies. Valores provisionales. Motivo: en el playtest de S4 el nombre pisaba el texto</td><td>Claude (propuesta, a partir del playtest de Brayan)</td></tr>
-    <tr><td>D-26</td><td>Tras agotar la conversación de un NPC, el aviso "E" deja de mostrarse (no se puede repetir). Alternativa: permitir releer sin contar de nuevo</td><td>Claude (propuesta, a validar)</td></tr>
-    <tr><td>D-27</td><td>NPC de pie (Mamá, Esposa) con los pies sobre el suelo (y=200), igual que el jugador y los sentados</td><td>Brayan (confirmó que flotaban)</td></tr>
+    <tr><td>D-25</td><td>Cuadro de diálogo: nombre y texto en un contenedor vertical (no pueden solaparse), fuentes más pequeñas y borde superior del panel en y≈205 para no tapar los pies. Valores provisionales. Motivo: en el playtest de S4 el nombre pisaba el texto. Ajuste en S6.2: el «[ E ]» del cuadro se ancla a la esquina inferior derecha del panel porque salía cortado. Validada en playtest</td><td>Claude (propuesta, a partir del playtest de Brayan)</td></tr>
+    <tr><td>D-26</td><td>Tras agotar la conversación de un NPC, el aviso "E" deja de mostrarse (no se puede repetir). Se oculta al iniciar y al terminar el diálogo, sin salir del área (corregido en S6.2: antes solo se ocultaba al volver a entrar). Alternativa: permitir releer sin contar de nuevo. Validada en playtest</td><td>Claude (propuesta)</td></tr>
+    <tr><td>D-27</td><td>NPC de pie (Mamá, Esposa) con los pies sobre el suelo (y=200), igual que el jugador y los sentados. Validada en playtest (jugador con origen en y=176 y cuerpo de 48 px: pies en y=200)</td><td>Brayan (confirmó que flotaban)</td></tr>
+    <tr><td>D-28</td><td>Habitación: el diálogo de la madre sale al recoger la caja de música (jugador bloqueado) y la huida empieza al terminarlo. Entrar en el haz solo activa el tinte y el sprite niño. Texto: «Sal a saludarles» (antes «Baja»). Validada en playtest</td><td>Brayan</td></tr>
+    <tr><td>D-29</td><td>Tamaños y orden de dibujado (placeholders): jugador adulto 16×48 (origen en y=176, pies en y=200); NPC de pie 48 y sentados 34; niño = adulto × <code>child_scale</code> (0.7, <code>@export</code> provisional). Constantes en <code>scripts/sizes.gd</code>. Jugador con <code>z_index</code> 2 para dibujarse por delante de los NPC. Validada en playtest</td><td>Brayan (tamaño del jugador y z_index); Claude (child_scale provisional)</td></tr>
+    <tr><td>D-30</td><td>Secuencia final: tras la huida y volver a adulto, el personaje mira la caja que lleva en las manos (nunca vuelve a la mesa) y aparece «[E] Reproducir». Al pulsar E suena «Noche de paz»; el personaje mira hacia arriba y empieza un scroll vertical continuo hacia el exterior nevado (misma escena); después aparece el mensaje. Sustituye a D-16 y cierra O-06. <code>connect_pause_seconds</code> y <code>music_hold_seconds</code> cambiarán de significado</td><td>Brayan</td></tr>
+    <tr><td>D-31</td><td>Música: audio generado a partir de un RTTL de Brayan (versión completa, 46 notas, b=112, 37 s por vuelta, bucle sin costura) con timbre de caja de música. Sustituye al sonitono externo de D-13. Pendiente de que Brayan lo escuche y apruebe</td><td>Brayan (RTTL); Claude (síntesis)</td></tr>
+    <tr><td>D-32</td><td>Mensaje final dirigido a «los que faltan en la mesa»: «Hubo una Navidad en la que nadie faltaba a la mesa. Por aquellos que hoy no están pero nunca se fueron, Feliz Navidad.» Aprobado en español; el inglés está pendiente (O-09)</td><td>Brayan (partió de la opción B de Claude y redactó la segunda línea)</td></tr>
   </table>
 
   <h3>Decisiones abiertas</h3>
@@ -282,7 +288,8 @@
     <tr><td>O-01</td><td>Visibilidad del repositorio (privado o público)</td><td>Privado hasta publicar</td></tr>
             <tr><td>O-04</td><td>Origen definitivo del arte (pack + variante niño)</td><td>Buscar pack con personajes modulares</td></tr>
             <tr><td>O-07</td><td>Tipografía: la fuente por defecto de Godot (16 px, suave) desentona con el pixel art. ¿Qué fuente pixel se usa? Verificar su licencia antes de incluirla</td><td>Decidir en S8; hasta entonces, fuente por defecto con tamaños reducidos</td></tr>
-            <tr><td>O-06</td><td>¿El final es una escena aparte o la misma habitación con la cámara subiendo hacia el exterior?</td><td>Misma escena con el exterior dibujado encima: el movimiento es continuo</td></tr>
+            <tr><td>O-09</td><td>Traducción al inglés del mensaje final (el español está aprobado)</td><td>«There was a Christmas when no one was missing from the table. For those who aren't here tonight but never left, Merry Christmas.» (Claude redacta, Brayan aprueba)</td></tr>
+            <tr><td>O-08</td><td>Guion definitivo del flashback: <code>FLASHBACK_MAMA_1/2</code> son [TEMP]. Según el resumen de Claude Code, la versión EN de MAMA_2 dice «They are waiting downstairs», que no encaja con «Sal a saludarles»</td><td>Revisarlo al redactar los textos definitivos (Claude redacta, Brayan aprueba)</td></tr>
       </table>
 </section>
 
@@ -293,10 +300,10 @@
     <tr><td>S1</td><td>GDD y decisiones</td><td>Hecho</td></tr>
     <tr><td>S2</td><td>Base técnica: repo, resolución, autoloads, esqueleto de escenas, localización</td><td>Hecho (aeb5898)</td></tr>
     <tr><td>S3</td><td>Jugador, interacción y diálogos</td><td>Hecho (32be988)</td></tr>
-    <tr><td>S4</td><td>Salón con 6 NPC y nombre del hablante</td><td>Hecho (cbb406b); playtest OK salvo el cuadro de diálogo (D-25) y los NPC que flotaban (D-27)</td></tr>
-    <tr><td>S5</td><td>Pasillo con el padre, refactor con <code>class_name</code></td><td>Hecho; playtest OK; commit por confirmar en GitHub</td></tr>
-    <tr><td>S6</td><td>Habitación: haz de luz, flashback y máquina de estados</td><td>Siguiente</td></tr>
-    <tr><td>S7</td><td>Música real, final con cámara vertical y nieve</td><td>Pendiente</td></tr>
+    <tr><td>S4</td><td>Salón con 6 NPC y nombre del hablante</td><td>Hecho (cbb406b); ajustes D-25, D-26 y D-27 aplicados en S6 y validados</td></tr>
+    <tr><td>S5</td><td>Pasillo con el padre, refactor con <code>class_name</code></td><td>Hecho (19c0787); playtest OK</td></tr>
+    <tr><td>S6</td><td>Habitación: haz de luz, flashback y máquina de estados</td><td>Hecho (1c789cb); D-28 (fc8557e) y ajustes de S6.2 (3609b16); playtest OK</td></tr>
+    <tr><td>S7</td><td>Final: caja en las manos, «[E] Reproducir», música (OGG en bucle), mirada hacia arriba, scroll vertical, nieve y mensaje</td><td>Siguiente</td></tr>
     <tr><td>S8</td><td>Arte definitivo, pulido, export web y prueba en itch.io</td><td>Pendiente</td></tr>
   </table>
   <p class="small">Fecha objetivo: antes de Nochebuena (24-dic-2026). Quedan unas 8 semanas.</p>
@@ -306,6 +313,8 @@
   <h2>13. Historial de cambios del GDD</h2>
   <table>
     <tr><th>Versión</th><th>Fecha</th><th>Cambios</th></tr>
+    <tr><td>0.6</td><td>2026-11-01</td><td>Secuencia final rediseñada por Brayan (D-30): la caja se queda en sus manos, «[E] Reproducir», mirada hacia arriba y scroll continuo. Música generada a partir de su RTTL (D-31). Mensaje final aprobado en español (D-32), con la traducción al inglés pendiente (O-09). Cerrado O-06. Sustituye a D-16 y D-13. Nuevo requisito de arte: poses del adulto.</td></tr>
+    <tr><td>0.5</td><td>2026-11-01</td><td>Playtest de S6, S6.1 y S6.2 (todo OK según Brayan). 4.3 y máquina de estados actualizados (D-28). D-23, D-25, D-26 y D-27 validadas; D-28 y D-29 nuevas. Plan con hashes de commit. O-08 y un riesgo nuevo (colisiones).</td></tr>
     <tr><td>0.4</td><td>2026-10-25</td><td>Resultados del playtest de S4 y S5. D-25 a D-27, O-07 y un riesgo nuevo (tipografía). Plan actualizado.</td></tr>
     <tr><td>0.3</td><td>2026-10-25</td><td>Pasillo implementado (tercera puerta decorativa), regla de <code>class_name</code>, flujo de la huida del flashback aclarado (corrige una frase confusa de 4.3), plan renumerado según las sesiones reales. D-20 a D-24 y O-06.</td></tr>
     <tr><td>0.2</td><td>2026-10-25</td><td>Repositorio confirmado. Secuencia final de la habitación (música al cruzar el haz por 2ª vez, con pausa). NPC por rol. Sonitono asumido sin licencia. Decisiones D-16 a D-19; cerradas O-02, O-03 y O-05.</td></tr>
