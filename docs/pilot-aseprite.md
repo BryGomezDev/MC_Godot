@@ -243,6 +243,74 @@ Tiempo total de sesión: estimado ~5 min (no medido con cronómetro; aproximaci�
 | Path resolution | Ruta explícita en Lua | CWD del servidor MCP (bug de flujo) |
 | Tiempo por iteración | ~2-3 seg (proceso único) | Múltiples procesos; no diferencia perceptible en 48×48 |
 
+---
+
+## Copia de referencia a 96 px
+
+**Fecha:** 2026-11-08  
+**Archivo fuente:** `assets/pilot_aseprite/ref/personaje_ref.png` (1254×1254 RGBA, 10 poses, ~28 K colores, 27.5% semi-transparente — no es pixel art nativo)  
+**Salida:** `adulto96.aseprite` 64×100, 10 frames, 32 colores, tags `idle` (1–4) y `walk` (5–10)
+
+### Método
+
+**Preprocesado Python** (`scripts/preprocess_ref.py`, `uv run --with pillow --with numpy`):
+
+| Parámetro | Valor |
+|-----------|-------|
+| Canvas | 64×100 px, pies en y=99 |
+| Target height | 96 px (idle) |
+| Scale factor | 0.23429 (96 / 409.8 px avg idle) |
+| Downsampling | `Image.BOX` |
+| Alpha | Hard binarize @ threshold 128 |
+| Paleta | `Image.Quantize.MEDIANCUT`, 32 colores, shared entre los 10 frames |
+| Cuantización | Distancia euclidiana vectorizada (NumPy), sin dithering |
+| Output | 10 PNGs + `palette.json` + `frame_data.json` (rows formato `draw_rows`) |
+
+**Montaje MCP** (perfil `cli`, batch mode, rutas absolutas):
+
+1. `create_canvas` — 64×100, RGB, 10 frames  
+2. `set_palette` — 32 colores del `palette.json`  
+3. `draw_rows` × 10 — datos de `frame_data.json` (cada frame = 100 strings × 64 chars)  
+4. `set_tag` × 2 — tags `idle` y `walk`  
+5. `export_spritesheet` — `adulto96_sheet.png` + `adulto96_sheet.json` (640×100 horizontal)
+
+**Total llamadas MCP:** ~26 (create + palette + 10 × draw_rows + 2 × tag + export + ~6 view_sprite + pixel reads)
+
+### Incidencias
+
+- **UnicodeEncodeError (cp1252):** Python en Windows usa cp1252 por defecto. Tres print statements con `×`, `→`, `──` fallaron. Fix: reemplazar todos por ASCII.
+- **Truncado de fila en draw_rows (frame 2):** Copy-paste manual del JSON truncó la fila 84 a 58 caracteres. Solución: generar `rows_NN.json` por frame, validar longitud antes de cada llamada.
+
+### Limpieza (Pasada 1)
+
+**Defectos identificados antes de la pasada:**
+
+1. Sin boca en ningún frame idle — lower face (y≈25-26) todo skin tone; walk frames sí tienen pixels de boca desde la referencia
+2. Botas fusionadas en idle F1–F4 — separador de 1 px (`#160c09`) presente pero débil en y=93
+3. Borde del jersey irregular en y≈56–58 — alternancia ruido rojo/azul sin línea limpia
+4. Oreja ausente en F1–F2 — x≈38, y=18-20 sin bump de skin tone
+5. Corona del pelo baja 1 px en F3–F4 vs F1–F2
+
+**Fix aplicado:** 2 pixels `#873f33` (sombra de nariz/labio) en y=26, x=31–32 para frames 1–4. Resultado: hint de sonrisa visible a 6× que iguala el detalle de los walk frames.
+
+**No corregido (imperceptible a escala de juego 1–2×):** hem del jersey, separación de botas, desfase de corona.
+
+### Valoración honesta
+
+**Lo que sale bien:**
+- La silueta del personaje es muy legible: pelo, ojo+ceja, nariz, boca (post pasada), jersey rojo navideño con copo de nieve, pantalón azul marino, botas marrón oscuro.
+- El ciclo walk de 6 frames tiene poses diferenciadas y lee fluido.
+- La paleta compartida de 32 colores mantiene consistencia de color entre idle y walk.
+
+**Lo que sale mal:**
+- La referencia no es pixel art nativo: el escalado BOX introduce suavizado que la cuantización convierte en ruido de colores (varias variantes de marrón oscuro en las botas, granos en las costuras del jersey).
+- No es posible capturar el detalle fino del original (copo de nieve complejo, cuentas del jersey) a 96 px sin redibujado manual.
+- La pose idle no tiene breathing animation diferencial entre frames 1–2 y 3–4; las diferencias son artefactos de cuantización, no intención artística.
+
+**Propuesta D-29:** revisar si el adulto necesita 96 px o puede reducirse a 72–80 px (menos ruido al escalar desde 1254), y definir la altura del niño (~64 px ≈ 0.67 × adulto).
+
+---
+
 ### Valoración honesta
 
 **Lo confirmado:**
