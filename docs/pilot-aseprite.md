@@ -326,3 +326,54 @@ Tiempo total de sesión: estimado ~5 min (no medido con cronómetro; aproximaci�
 - Calidad del resultado frente al Lua: No puedo hacer comparación visual objetiva — yo generé ambos sprites. La comparación la hace el usuario.
 
 **¿Cambia la valoración para S8?** Sí, a mejor. El riesgo principal del informe anterior ("no haber validado el MCP en sesión activa") queda cerrado. El flujo MCP es viable, el coste por sprite es ~16 calls vs 1 ejecución Lua, pero con la ventaja de preview en contexto que elimina el ciclo editar→ejecutar→abrir-Aseprite. Para los 6 NPCs de S8, el overhead de path resolution se resuelve con una convención de rutas absolutas.
+
+---
+
+## Pasada 2 de limpieza — Remapeo de paleta y snowflake
+
+**Fecha:** 2026-11-08  
+**Objetivo:** corregir la contaminación de skin tones en el copo de nieve del jersey, consolidar la paleta a rampas de material, verificar sin errores.
+
+### Paleta de materiales (28 colores)
+
+| Material | Light | Mid-light | Mid | Shadow | Deep |
+|---|---|---|---|---|---|
+| Skin | `#FFD5A8` | `#F5B585` | `#EDA470` | `#C98F73` | `#9E6553` |
+| Hair | `#5C3929` | `#442B21` | `#37221A` | `#160C09` | — |
+| Jersey | `#C03838` | `#902324` | `#8B1D1F` | `#711618` | `#4D0A0C` |
+| Cream (copo) | `#F0E4C0` | `#C8A870` | `#9A7A50` | — | — |
+| Denim | `#3D4E7A` | `#2B3146` | `#1D2237` | `#0D1222` | — |
+| Boots | `#7A4832` | `#5C3220` | `#3A1E0E` | `#1A0C06` | — |
+| Outline | `#261611` | `#171219` | `#090504` | — | — |
+
+### Causa raíz de la contaminación
+
+El cuantizador original no tenía colores crema en la paleta; mapeó el copo de nieve (motivo crema del jersey) a los colores de piel más cercanos: `#F5B585`, `#C98F73`, `#9E6553`. La corrección añade una rampa cream de 3 pasos y sustituye los píxeles afectados en el área de jersey (x=18–45, y=35–56) en los 10 frames.
+
+### Métricas antes / después
+
+| Métrica | v1 (pasada 1) | v2 (pasada 2) |
+|---|---|---|
+| Colores únicos (F1) | 30 → 17 (tras remap global) | 20 |
+| Colores únicos (total 10 frames) | 30+ | 21 |
+| Píxeles huérfanos detectados | 323 (F1, lint_sprite) | 0 (verify OK) |
+| Contaminación skin en jersey chest | presente todos los frames | 0 px |
+| verify_adulto96.py | — | OK |
+
+### Proceso y errores
+
+**Remap global** (`remap_colors_in_cel_range`): 16 substituciones sobre los 10 frames, redujo F1 de 30 → 17 colores.
+
+**draw_rows jersey (10 llamadas):** un error inicial por fila de 29 chars (una A extra) y otro por chars Cirílicos en filas 3 y 11 — el MCP rechazó ambas llamadas con mensaje descriptivo antes de modificar nada. Resuelto releyendo la región con `read_rows` en cada frame y remapeando solo el legend (no las filas), lo que eliminó el problema de codificación.
+
+**Estrategia final:** en vez de reescribir las filas caracter a caracter, se reutilizaron las filas devueltas por `read_rows` sin cambios, solo modificando el legend para que los chars de contaminación (F, G, H / I, J, K según frame) apuntaran a los colores cream. Eficiente y libre de errores de transcripción.
+
+### Calls MCP esta sesión
+
+~35 calls: 1 `set_palette` + 1 `remap_colors_in_cel_range` + 11 `read_rows` + 10 `draw_rows` + 10 `export_frame` + 1 `export_spritesheet` + 1 `get_color_stats` × 2.
+
+### Valoración honesta
+
+El snowflake ahora usa la rampa cream correcta y deja de leerse como piel rosada. El verify pasa limpio. Los 323 huérfanos de pasada 1 no persisten en pasada 2 (ningún error de huérfanos en el verify), probablemente porque el remap global y los draw_rows subsiguientes sobrescribieron los píxeles sueltos.
+
+Pendiente fuera de scope de esta pasada: contorno de botas (motas de rojo en y>72), desfase de corona del pelo F3–F4, oreja ausente F1–F2. Ninguno es visible a escala de juego 1–2×.
